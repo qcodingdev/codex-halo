@@ -97,7 +97,12 @@ $Temp = "$HooksPath.$PID.tmp"
 $Json = $Document | ConvertTo-Json -Depth 20
 [IO.File]::WriteAllText($Temp, $Json + [Environment]::NewLine, (New-Object Text.UTF8Encoding($false)))
 if (Test-Path $HooksPath) {
-    [IO.File]::Replace($Temp, $HooksPath, $null)
+    $ReplacementBackup = "$HooksPath.$PID.replace-backup"
+    try {
+        [IO.File]::Replace($Temp, $HooksPath, $ReplacementBackup)
+    } finally {
+        Remove-Item -Force -ErrorAction SilentlyContinue $ReplacementBackup
+    }
 } else {
     Move-Item -Path $Temp -Destination $HooksPath
 }
