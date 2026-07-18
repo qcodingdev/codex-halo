@@ -1,0 +1,142 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    name: Quality / macOS
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm check
+      - run: cargo fmt --manifest-path src-tauri/Cargo.toml --check
+      - run: cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings
+      - run: cargo test --manifest-path src-tauri/Cargo.toml
+      - name: Test macOS hook merge safety
+        run: |
+          fixture="$RUNNER_TEMP/hooks.json"
+          cp tests/fixtures/hooks.json "$fixture"
+          command='/bin/bash "/Users/example/.codex-halo/codex-halo-hook.sh"'
+          osascript -l JavaScript scripts/macos/manage-hooks.js install "$fixture" "$command"
+          test "$(osascript -l JavaScript scripts/macos/manage-hooks.js verify "$fixture")" = "5"
+          osascript -l JavaScript scripts/macos/manage-hooks.js install "$fixture" "$command"
+          test "$(osascript -l JavaScript scripts/macos/manage-hooks.js verify "$fixture")" = "5"
+          osascript -l JavaScript scripts/macos/manage-hooks.js uninstall "$fixture"
+          test "$(osascript -l JavaScript scripts/macos/manage-hooks.js verify "$fixture")" = "0"
+          plutil -extract hooks.Stop.0.hooks.0.command raw "$fixture" | grep -q existing-tool
+
+  macos-targets:
+    name: Build / ${{ matrix.name }}
+    runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: macOS Intel
+            target: x86_64-apple-darwin
+            artifact: macos-intel
+          - name: macOS Apple Silicon
+            target: aarch64-apple-darwin
+            artifact: macos-apple-silicon
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm tauri build --no-bundle --target "${{ matrix.target }}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: src-tauri/target/${{ matrix.target }}/release/codex-halo-lite
+          if-no-files-found: error
+
+  macos-universal:
+    name: Build / macOS Intel + ARM64 + Universal
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-apple-darwin,aarch64-apple-darwin
+      - run: pnpm install --frozen-lockfile
+      - run: bash scripts/release/package-macos.sh 0.1.0
+      - name: Verify Universal app
+        run: |
+          binary="src-tauri/target/universal-apple-darwin/release/bundle/macos/Codex Halo.app/Contents/MacOS/codex-halo-lite"
+          lipo -verify_arch x86_64 arm64 "$binary"
+          plutil -lint "src-tauri/target/universal-apple-darwin/release/bundle/macos/Codex Halo.app/Contents/Info.plist"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: codex-halo-macos-universal
+          path: dist/release/Codex-Halo-macOS-Universal-v0.1.0.zip
+          if-no-files-found: error
+
+  windows-x64:
+    name: Build / Windows x64
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+      - run: pnpm install --frozen-lockfile
+      - name: Test Windows hook merge safety
+        shell: pwsh
+        run: |
+          $fixture = Join-Path $env:RUNNER_TEMP "hooks.json"
+          Copy-Item tests/fixtures/hooks.json $fixture
+          $command = 'powershell.exe -File "C:\Users\example\.codex-halo\codex-halo-hook.ps1"'
+          & scripts/windows/Manage-Codex-HaloHooks.ps1 Install $fixture $command
+          if ((& scripts/windows/Manage-Codex-HaloHooks.ps1 Verify $fixture) -ne 5) { exit 1 }
+          & scripts/windows/Manage-Codex-HaloHooks.ps1 Install $fixture $command
+          if ((& scripts/windows/Manage-Codex-HaloHooks.ps1 Verify $fixture) -ne 5) { exit 1 }
+          & scripts/windows/Manage-Codex-HaloHooks.ps1 Uninstall $fixture
+          if ((& scripts/windows/Manage-Codex-HaloHooks.ps1 Verify $fixture) -ne 0) { exit 1 }
+          if (-not ((Get-Content -Raw $fixture) -like "*existing-tool*")) { exit 1 }
+      - shell: pwsh
+        run: scripts/release/package-windows.ps1 0.1.0
+      - uses: actions/upload-artifact@v4
+        with:
+          name: codex-halo-windows-x64
+          path: dist/release/Codex-Halo-Windows-x64-v0.1.0.zip
+          if-no-files-found: error

@@ -1,0 +1,28 @@
+[package]
+name = "codex-halo-lite"
+version = "0.1.0"
+description = "Codex Halo - Screen edge glows with your AI assistant"
+authors = ["Codex Halo"]
+edition = "2021"
+
+[lib]
+name = "codex_halo_lite_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["tray-icon", "macos-private-api"] }
+tauri-plugin-notification = "2"
+tauri-plugin-autostart = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+log = "0.4"
+env_logger = "0.11"
+notify = { version = "7", default-features = false, features = ["macos_fsevent"] }
+dirs = "6"
+
+[features]
+default = ["custom-protocol"]
+custom-protocol = ["tauri/custom-protocol"]

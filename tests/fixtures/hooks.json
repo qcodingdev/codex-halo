@@ -1,0 +1,16 @@
+{
+  "description": "Fixture proving Halo preserves unrelated user hooks.",
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/usr/local/bin/existing-tool",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

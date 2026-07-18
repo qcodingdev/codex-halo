@@ -1,0 +1,39 @@
+{
+  "name": "codex-halo-lite",
+  "private": true,
+  "version": "0.1.0",
+  "packageManager": "pnpm@9.1.1",
+  "type": "module",
+  "engines": {
+    "node": ">=22.12",
+    "pnpm": ">=9"
+  },
+  "scripts": {
+    "dev": "vite",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint . --max-warnings 0",
+    "build": "pnpm typecheck && vite build",
+    "check": "pnpm lint && pnpm build",
+    "preview": "vite preview",
+    "tauri": "tauri"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "^2",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@tauri-apps/cli": "^2",
+    "@types/node": "^26.1.1",
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6",
+    "@vitejs/plugin-react": "^4.6.0",
+    "eslint": "^10.7.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.3",
+    "typescript": "~5.8.3",
+    "typescript-eslint": "^8.64.0",
+    "vite": "^7.0.4"
+  }
+}

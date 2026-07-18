@@ -1,0 +1,29 @@
+Codex Halo v0.1.0
+=================
+
+Your screen glows with Codex.
+
+macOS
+-----
+1. Extract the entire ZIP.
+2. Run "Install Codex Halo.command".
+3. First launch: right-click "Codex Halo.app", then choose Open.
+4. In Codex, open /hooks and review/trust the Halo command hooks.
+5. From the menu-bar icon, choose Demo Mode.
+
+Windows
+-------
+1. Extract the entire ZIP.
+2. Run "Install-Codex-Halo.ps1" with PowerShell.
+3. In Codex, open /hooks and review/trust the Halo command hooks.
+4. From the tray icon, choose Demo Mode.
+
+Privacy and safety
+------------------
+Codex Halo is local-only. It has no network service and no telemetry. The hook
+adapter stores only a state, millisecond timestamp, and lifecycle event name in
+~/.codex-halo/state.json. It never stores prompts, source code, tool input, or
+responses. Installation backs up and safely merges ~/.codex/hooks.json.
+
+This is an independent community project and is not affiliated with or endorsed
+by OpenAI.

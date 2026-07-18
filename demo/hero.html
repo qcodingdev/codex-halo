@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Codex Halo — Hero Preview</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: #05080b;
+      }
+      * { box-sizing: border-box; }
+      html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; }
+      body {
+        color: #edfaff;
+        background:
+          radial-gradient(circle at 24% 10%, rgba(0, 229, 255, .10), transparent 34%),
+          radial-gradient(circle at 78% 84%, rgba(86, 244, 208, .06), transparent 38%),
+          linear-gradient(145deg, #0a1016, #030507 68%);
+      }
+      .grain {
+        position: fixed; inset: 0; opacity: .08; pointer-events: none;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 160 160' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.35'/%3E%3C/svg%3E");
+      }
+      .shell {
+        position: absolute; inset: 40px 52px 46px;
+        display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.16fr); gap: 46px; align-items: center;
+      }
+      .brand { position: absolute; left: 0; top: 0; display: flex; align-items: center; gap: 14px; color: #bcd3db; font-size: 18px; font-weight: 650; }
+      .mark { width: 42px; height: 42px; }
+      .copy { grid-column: 1; }
+      .eyebrow { color: #65e8f5; font-size: 14px; font-weight: 750; letter-spacing: .18em; text-transform: uppercase; }
+      h1 { margin: 18px 0 14px; max-width: 610px; font-size: 64px; line-height: .98; letter-spacing: -.055em; }
+      .subtitle { max-width: 500px; margin: 0; color: #94aab4; font-size: 20px; line-height: 1.55; }
+      .states { display: flex; gap: 10px; margin-top: 32px; }
+      .state {
+        border: 1px solid rgba(255,255,255,.09); border-radius: 999px;
+        padding: 9px 13px; background: rgba(255,255,255,.035);
+        color: #758b95; font-size: 13px; font-weight: 650; transition: .25s ease;
+      }
+      .state::before { content: ""; display: inline-block; width: 7px; height: 7px; margin-right: 8px; border-radius: 50%; background: currentColor; }
+      body[data-state="working"] .state.working { color: #44e8ff; border-color: rgba(0,229,255,.35); background: rgba(0,229,255,.08); }
+      body[data-state="attention"] .state.attention { color: #ffd84d; border-color: rgba(255,216,77,.38); background: rgba(255,216,77,.08); }
+      body[data-state="completed"] .state.completed { color: #65f5a3; border-color: rgba(101,245,163,.38); background: rgba(101,245,163,.08); }
+      .window {
+        grid-column: 2; height: 534px; overflow: hidden;
+        border: 1px solid rgba(255,255,255,.10); border-radius: 22px;
+        background: rgba(9,14,19,.83); box-shadow: 0 30px 100px rgba(0,0,0,.45);
+        transform: perspective(1200px) rotateY(-4deg) rotateX(1deg);
+      }
+      .windowbar { height: 50px; display: flex; align-items: center; padding: 0 18px; border-bottom: 1px solid rgba(255,255,255,.07); }
+      .dots { display: flex; gap: 7px; }
+      .dot { width: 10px; height: 10px; border-radius: 50%; background: #26313a; }
+      .window-title { margin: auto; padding-right: 47px; color: #647782; font-size: 12px; font-weight: 650; }
+      .terminal { padding: 28px; color: #8ba0aa; font: 14px/1.7 ui-monospace, SFMono-Regular, Menlo, monospace; }
+      .terminal .dim { color: #475861; }
+      .terminal .cyan { color: #55eafb; }
+      .terminal .green { color: #68e5a0; }
+      .terminal .yellow { color: #ffd860; }
+      .terminal .block { margin: 14px 0 18px; padding: 14px 16px; border-left: 2px solid #1e505d; background: rgba(0,229,255,.035); }
+      .cursor { display: inline-block; width: 7px; height: 16px; margin-left: 4px; vertical-align: -3px; background: #69e8f5; animation: blink 1s steps(1) infinite; }
+      .status {
+        position: absolute; right: 72px; bottom: 66px; min-width: 205px;
+        display: flex; align-items: center; gap: 11px; padding: 11px 15px;
+        border: 1px solid rgba(255,255,255,.10); border-radius: 13px;
+        background: rgba(4,8,11,.88); box-shadow: 0 14px 40px rgba(0,0,0,.4);
+        font-size: 13px; font-weight: 700;
+      }
+      .status-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 15px var(--accent); }
+      .status-label { color: var(--accent); }
+      .local { margin-left: auto; color: #52636b; font-size: 10px; letter-spacing: .08em; }
+      .edge { position: fixed; z-index: 20; pointer-events: none; opacity: .98; filter: drop-shadow(0 0 10px var(--glow)); }
+      .edge.top, .edge.bottom { left: 0; right: 0; height: 4px; }
+      .edge.left, .edge.right { top: 0; bottom: 0; width: 4px; }
+      .edge.top { top: 0; } .edge.bottom { bottom: 0; }
+      .edge.left { left: 0; } .edge.right { right: 0; }
+      body[data-state="working"] { --accent: #35e7ff; --glow: rgba(0, 218, 255, .85); }
+      body[data-state="attention"] { --accent: #ffd84d; --glow: rgba(255, 196, 0, .9); }
+      body[data-state="completed"] { --accent: #60ef9b; --glow: rgba(49, 232, 127, .9); }
+      body[data-state="working"] .edge {
+        background: linear-gradient(90deg, transparent 2%, #0b89ff 25%, #6af5df 50%, #0b89ff 75%, transparent 98%);
+        background-size: 220% 100%; animation: flow 1.65s linear infinite;
+      }
+      body[data-state="working"] .edge.left,
+      body[data-state="working"] .edge.right {
+        background: linear-gradient(180deg, transparent 2%, #0b89ff 25%, #6af5df 50%, #0b89ff 75%, transparent 98%);
+        background-size: 100% 220%;
+      }
+      body[data-state="attention"] .edge { background: #ffd14a; animation: pulse .9s ease-in-out infinite alternate; }
+      body[data-state="completed"] .edge { background: #5af39a; animation: complete .58s ease-out both; }
+      body[data-state="completed"] .edge.right { animation-delay: .38s; }
+      body[data-state="completed"] .edge.bottom { animation-delay: .76s; }
+      body[data-state="completed"] .edge.left { animation-delay: 1.14s; }
+      @keyframes flow { to { background-position: -220% 0; } }
+      @keyframes pulse { from { opacity: .48; filter: drop-shadow(0 0 5px var(--glow)); } to { opacity: 1; filter: drop-shadow(0 0 17px var(--glow)); } }
+      @keyframes complete { from { opacity: 0; transform: scaleX(0); } to { opacity: 1; transform: scaleX(1); } }
+      @keyframes blink { 50% { opacity: 0; } }
+    </style>
+  </head>
+  <body data-state="working">
+    <div class="grain"></div>
+    <div class="shell">
+      <div class="brand">
+        <img class="mark" src="../assets/brand/icon.svg" alt="" />
+        Codex Halo
+      </div>
+      <div class="copy">
+        <div class="eyebrow">Ambient state for Codex</div>
+        <h1>Your screen<br />knows.</h1>
+        <p class="subtitle">A quiet, local-only halo for the moments when Codex is working, waiting, or done.</p>
+        <div class="states">
+          <div class="state working">Working</div>
+          <div class="state attention">Needs you</div>
+          <div class="state completed">Completed</div>
+        </div>
+      </div>
+      <div class="window">
+        <div class="windowbar">
+          <div class="dots"><i class="dot"></i><i class="dot"></i><i class="dot"></i></div>
+          <div class="window-title">codex · shipping the last 10%</div>
+        </div>
+        <div class="terminal">
+          <div><span class="cyan">›</span> Review the app, fix the bugs, and finish the release.</div>
+          <div class="block"><span class="green">✓</span> Frontend quality gates passed<br /><span class="green">✓</span> Event-driven state bridge ready<br /><span class="green">✓</span> Safe hook merge verified</div>
+          <div><span class="dim">•</span> Building macOS Universal package…</div>
+          <div><span class="dim">•</span> Validating Windows x64 workflow…</div>
+          <div style="margin-top: 24px"><span class="yellow">codex</span> Finishing the release<span class="cursor"></span></div>
+        </div>
+      </div>
+    </div>
+    <div class="status"><span class="status-dot"></span><span class="status-label">Codex is working</span><span class="local">LOCAL</span></div>
+    <i class="edge top"></i><i class="edge right"></i><i class="edge bottom"></i><i class="edge left"></i>
+    <script>
+      const sequence = [
+        ["working", "Codex is working", 3000],
+        ["attention", "Codex needs you", 3000],
+        ["completed", "Turn completed", 2000],
+      ];
+      let index = 0;
+      const apply = () => {
+        const [state, label, duration] = sequence[index];
+        document.body.dataset.state = state;
+        document.querySelector(".status-label").textContent = label;
+        setTimeout(() => { index = (index + 1) % sequence.length; apply(); }, duration);
+      };
+      apply();
+    </script>
+  </body>
+</html>

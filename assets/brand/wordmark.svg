@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 220" role="img" aria-label="Codex Halo">
+  <defs>
+    <linearGradient id="halo" x1="22" y1="184" x2="210" y2="28" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#00D9FF"/>
+      <stop offset=".55" stop-color="#56F4D0"/>
+      <stop offset=".78" stop-color="#FFE66B"/>
+      <stop offset="1" stop-color="#FF5D96"/>
+    </linearGradient>
+  </defs>
+  <rect width="220" height="220" rx="54" fill="#071018"/>
+  <circle cx="110" cy="110" r="72" fill="none" stroke="#18303B" stroke-width="12"/>
+  <circle cx="110" cy="110" r="72" fill="none" stroke="url(#halo)" stroke-linecap="round" stroke-width="10" stroke-dasharray="352 101" transform="rotate(-32 110 110)"/>
+  <path d="m69 86 27 24-27 24m43 1h42" fill="none" stroke="#E8FEFF" stroke-linecap="round" stroke-linejoin="round" stroke-width="12"/>
+  <circle cx="179" cy="48" r="6" fill="#FFE66B"/>
+  <text x="266" y="136" fill="#EAFBFF" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" font-size="92" font-weight="700" letter-spacing="-4">Codex Halo</text>
+  <text x="270" y="181" fill="#7D98A3" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" font-size="23" font-weight="500" letter-spacing="4">YOUR SCREEN KNOWS</text>
+</svg>

@@ -1,0 +1,25 @@
+name: Feature request
+description: Propose a focused improvement that preserves the local-only boundary
+title: "[Idea] "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would this solve?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed experience
+      description: Explain the visible behavior and performance/privacy impact.
+    validations:
+      required: true
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Project boundaries
+      options:
+        - label: This does not require prompt/code capture, telemetry, or a network service.
+          required: true

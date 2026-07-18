@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Codex Halo">
+  <defs>
+    <linearGradient id="bg" x1="76" y1="58" x2="442" y2="458" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#111A26"/>
+      <stop offset="1" stop-color="#030609"/>
+    </linearGradient>
+    <linearGradient id="halo" x1="78" y1="390" x2="435" y2="112" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#00E5FF"/>
+      <stop offset=".48" stop-color="#62F7D3"/>
+      <stop offset=".73" stop-color="#FFE66B"/>
+      <stop offset="1" stop-color="#FF5D96"/>
+    </linearGradient>
+    <filter id="glow" x="-80%" y="-80%" width="260%" height="260%">
+      <feGaussianBlur stdDeviation="14"/>
+    </filter>
+  </defs>
+  <rect x="20" y="20" width="472" height="472" rx="112" fill="url(#bg)"/>
+  <rect x="21" y="21" width="470" height="470" rx="111" fill="none" stroke="#FFFFFF" stroke-opacity=".09" stroke-width="2"/>
+  <circle cx="256" cy="256" r="158" fill="none" stroke="url(#halo)" stroke-opacity=".38" stroke-width="20" filter="url(#glow)"/>
+  <circle cx="256" cy="256" r="158" fill="none" stroke="#172A34" stroke-width="22"/>
+  <circle cx="256" cy="256" r="158" fill="none" stroke="url(#halo)" stroke-linecap="round" stroke-width="18" stroke-dasharray="770 223" transform="rotate(-32 256 256)"/>
+  <path d="M165 208 219 256 165 304" fill="none" stroke="#E8FEFF" stroke-linecap="round" stroke-linejoin="round" stroke-width="25"/>
+  <path d="M251 306h94" fill="none" stroke="#E8FEFF" stroke-linecap="round" stroke-width="25"/>
+  <circle cx="407" cy="124" r="12" fill="#FFE66B"/>
+</svg>

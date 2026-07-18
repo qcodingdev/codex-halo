@@ -1,0 +1,335 @@
+:root {
+  --halo-color: #00d4ff;
+  --halo-color-secondary: #0066ff;
+  --halo-width: 4px;
+  --halo-duration: 2800ms;
+  --halo-intensity: 0.78;
+  --halo-glow: 11px;
+  color-scheme: dark;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root,
+.halo-root {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  background: transparent !important;
+}
+
+.halo-root,
+.halo-frame,
+.halo-minimal,
+.halo-edge,
+.halo-edge-light {
+  pointer-events: none;
+  user-select: none;
+}
+
+.halo-frame {
+  position: fixed;
+  inset: 0;
+  contain: strict;
+  z-index: 2147483647;
+}
+
+.halo-edge {
+  position: absolute;
+  overflow: hidden;
+  opacity: var(--halo-intensity);
+  filter: drop-shadow(0 0 var(--halo-glow) var(--halo-color));
+  will-change: opacity;
+}
+
+.halo-edge-top,
+.halo-edge-bottom {
+  right: 0;
+  left: 0;
+  height: var(--halo-width);
+}
+
+.halo-edge-left,
+.halo-edge-right {
+  top: 0;
+  bottom: 0;
+  width: var(--halo-width);
+}
+
+.halo-edge-top {
+  top: 0;
+}
+
+.halo-edge-right {
+  right: 0;
+}
+
+.halo-edge-bottom {
+  bottom: 0;
+}
+
+.halo-edge-left {
+  left: 0;
+}
+
+.halo-edge-light {
+  position: absolute;
+  display: block;
+  background: var(--halo-color);
+  box-shadow: 0 0 calc(var(--halo-glow) * 0.65) var(--halo-color);
+}
+
+/* Working: four transform-only light runners keep repainting to thin edge strips. */
+.halo-frame-working .halo-edge-light {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--halo-color-secondary) 22%,
+    var(--halo-color) 50%,
+    var(--halo-color-secondary) 78%,
+    transparent 100%
+  );
+  will-change: transform;
+}
+
+.halo-frame-working .halo-edge-top .halo-edge-light,
+.halo-frame-working .halo-edge-bottom .halo-edge-light {
+  top: 0;
+  width: 38%;
+  height: 100%;
+  animation: halo-run-horizontal var(--halo-duration) linear infinite;
+}
+
+.halo-frame-working .halo-edge-bottom .halo-edge-light {
+  animation-direction: reverse;
+}
+
+.halo-frame-working .halo-edge-left .halo-edge-light,
+.halo-frame-working .halo-edge-right .halo-edge-light {
+  left: 0;
+  width: 100%;
+  height: 38%;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    var(--halo-color-secondary) 22%,
+    var(--halo-color) 50%,
+    var(--halo-color-secondary) 78%,
+    transparent 100%
+  );
+  animation: halo-run-vertical var(--halo-duration) linear infinite;
+  will-change: transform;
+}
+
+.halo-frame-working .halo-edge-left .halo-edge-light {
+  animation-direction: reverse;
+}
+
+@keyframes halo-run-horizontal {
+  from {
+    transform: translate3d(-105%, 0, 0);
+  }
+  to {
+    transform: translate3d(370%, 0, 0);
+  }
+}
+
+@keyframes halo-run-vertical {
+  from {
+    transform: translate3d(0, -105%, 0);
+  }
+  to {
+    transform: translate3d(0, 370%, 0);
+  }
+}
+
+/* Attention: a restrained, uniform amber breath. */
+.halo-frame-attention .halo-edge {
+  background: var(--halo-color);
+  animation: halo-attention var(--halo-duration) ease-in-out infinite;
+}
+
+.halo-frame-attention .halo-edge-light {
+  inset: 0;
+  background: var(--halo-color);
+}
+
+@keyframes halo-attention {
+  0%,
+  100% {
+    opacity: calc(var(--halo-intensity) * 0.28);
+    filter: drop-shadow(0 0 3px var(--halo-color-secondary));
+  }
+  50% {
+    opacity: var(--halo-intensity);
+    filter: drop-shadow(0 0 var(--halo-glow) var(--halo-color));
+  }
+}
+
+/* Completed: one clockwise sweep, split evenly across the four edges. */
+.halo-frame-completed .halo-edge-light {
+  inset: 0;
+  background: linear-gradient(90deg, var(--halo-color), var(--halo-color-secondary));
+  animation-duration: calc(var(--halo-duration) / 4);
+  animation-timing-function: ease-out;
+  animation-fill-mode: both;
+  will-change: transform, opacity;
+}
+
+.halo-frame-completed .halo-edge-top .halo-edge-light {
+  transform-origin: left;
+  animation-name: halo-sweep-x;
+}
+
+.halo-frame-completed .halo-edge-right .halo-edge-light {
+  transform-origin: top;
+  animation-name: halo-sweep-y;
+  animation-delay: calc(var(--halo-duration) / 4);
+}
+
+.halo-frame-completed .halo-edge-bottom .halo-edge-light {
+  transform-origin: right;
+  animation-name: halo-sweep-x;
+  animation-delay: calc(var(--halo-duration) / 2);
+}
+
+.halo-frame-completed .halo-edge-left .halo-edge-light {
+  transform-origin: bottom;
+  animation-name: halo-sweep-y;
+  animation-delay: calc(var(--halo-duration) * 0.75);
+}
+
+@keyframes halo-sweep-x {
+  0% {
+    opacity: 0;
+    transform: scaleX(0);
+  }
+  18% {
+    opacity: var(--halo-intensity);
+  }
+  78% {
+    opacity: var(--halo-intensity);
+    transform: scaleX(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scaleX(1);
+  }
+}
+
+@keyframes halo-sweep-y {
+  0% {
+    opacity: 0;
+    transform: scaleY(0);
+  }
+  18% {
+    opacity: var(--halo-intensity);
+  }
+  78% {
+    opacity: var(--halo-intensity);
+    transform: scaleY(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scaleY(1);
+  }
+}
+
+.halo-minimal {
+  position: fixed;
+  top: 0;
+  right: 0;
+  left: 0;
+  display: flex;
+  justify-content: center;
+  contain: layout paint;
+  z-index: 2147483647;
+}
+
+.halo-minimal-bar {
+  width: 210px;
+  height: var(--halo-width);
+  overflow: hidden;
+  border-radius: 0 0 999px 999px;
+  background: var(--halo-color);
+  box-shadow: 0 1px var(--halo-glow) var(--halo-color);
+  transform-origin: center;
+}
+
+.halo-minimal-working .halo-minimal-bar {
+  animation: halo-minimal-working var(--halo-duration) ease-in-out infinite;
+}
+
+.halo-minimal-attention .halo-minimal-bar {
+  animation: halo-minimal-attention var(--halo-duration) ease-in-out infinite;
+}
+
+.halo-minimal-completed .halo-minimal-bar {
+  animation: halo-minimal-completed var(--halo-duration) ease-out forwards;
+}
+
+@keyframes halo-minimal-working {
+  0%,
+  100% {
+    opacity: calc(var(--halo-intensity) * 0.55);
+    transform: scaleX(0.72);
+  }
+  50% {
+    opacity: var(--halo-intensity);
+    transform: scaleX(1);
+  }
+}
+
+@keyframes halo-minimal-attention {
+  0%,
+  100% {
+    opacity: 0.25;
+  }
+  50% {
+    opacity: var(--halo-intensity);
+  }
+}
+
+@keyframes halo-minimal-completed {
+  0% {
+    opacity: var(--halo-intensity);
+    transform: scaleX(0);
+  }
+  70% {
+    opacity: var(--halo-intensity);
+    transform: scaleX(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scaleX(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .halo-edge-light,
+  .halo-edge,
+  .halo-minimal-bar {
+    animation: none !important;
+  }
+
+  .halo-frame-working .halo-edge-light,
+  .halo-frame-completed .halo-edge-light {
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: var(--halo-intensity);
+    transform: none;
+  }
+
+  .halo-minimal-bar {
+    opacity: var(--halo-intensity);
+    transform: none;
+  }
+}
