@@ -10,7 +10,7 @@
 - macOS Intel packaged-app smoke test (overlay, click-through, tray, Demo,
   settings, logs, notification, quit)
 - macOS install/verify/uninstall cycle repeated three times
-- Universal binary verified with `lipo -verify_arch x86_64 arm64`
+- Universal binary verified with `lipo <binary> -verify_arch x86_64 arm64`
 - Windows x64 and macOS target workflows green
 - README claims match actual device versus CI evidence
 

@@ -90,7 +90,7 @@ jobs:
       - name: Verify Universal app
         run: |
           binary="src-tauri/target/universal-apple-darwin/release/bundle/macos/Codex Halo.app/Contents/MacOS/codex-halo-lite"
-          lipo -verify_arch x86_64 arm64 "$binary"
+          lipo "$binary" -verify_arch x86_64 arm64
           plutil -lint "src-tauri/target/universal-apple-darwin/release/bundle/macos/Codex Halo.app/Contents/Info.plist"
       - uses: actions/upload-artifact@v4
         with:
