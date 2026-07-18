@@ -37,8 +37,10 @@ bursts of tool events do not create sleeping-thread buildup.
 
 ## Window model
 
-The overlay is created lazily at the primary monitor's logical size. Before
-showing, it is refit using the monitor's physical position and dimensions. It is:
+Halo creates one `overlay-N` window per available monitor, sorted by display
+position for stable labels. Each state transition synchronizes the window set,
+refits every overlay to its monitor's physical position and dimensions, and
+removes stale windows after a display is disconnected. Each overlay is:
 
 - transparent and undecorated;
 - always on top and visible on all workspaces;
@@ -46,8 +48,10 @@ showing, it is refit using the monitor's physical position and dimensions. It is
 - excluded from the taskbar/Dock;
 - configured to ignore cursor events.
 
-Idle hides the window. Non-idle rendering uses four thin edge elements (or one
-top bar for Minimal). Animations primarily change transforms and opacity.
+Idle hides every overlay. Non-idle rendering uses four narrow edge elements (or
+one top bar for Minimal). Animations primarily change transforms and opacity.
+Tauri's single-instance plugin is registered first, so a repeated app launch
+cannot create duplicate status icons or watcher processes.
 
 ## Persistence
 

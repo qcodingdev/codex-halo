@@ -27,8 +27,9 @@
 | **Idle** | Invisible | No overlay and no animation |
 
 The overlay never accepts focus and every mouse click passes through to the app
-underneath it. When idle, the window is hidden and the file watcher blocks on
-native filesystem events rather than polling.
+underneath it. Every connected display gets its own synchronized edge overlay.
+When idle, all overlay windows are hidden and the file watcher blocks on native
+filesystem events rather than polling.
 
 ## Download
 
@@ -116,11 +117,12 @@ The performance design is intentionally boring:
 - hidden overlay and no CSS animation in idle;
 - transform/opacity-first edge animations;
 - one cancellable timeout worker instead of one sleeping thread per event;
-- a 197.61 KB production JavaScript bundle (62.22 KB gzip).
+- a 197.61 KB production JavaScript bundle (62.21 KB gzip).
 
 On a 2018 Intel Core i9 MacBook Pro running macOS 15.7.7, the packaged app
-measured 0.0% main-process CPU across six idle samples and 1.6–1.7% during the
-working animation. Main-process RSS stayed around 48–51 MiB. See the
+measured 0.0% main-process CPU across ten idle samples and 3.1–3.5% while
+animating both a 3360×2100 Retina display and a 2560×1440 external display.
+Main-process RSS stayed around 50–51 MiB. See the
 [v0.1.0 release notes](docs/RELEASE_NOTES_v0.1.0.md) for the method and
 validation scope; Apple Silicon and Windows remain CI-only validation.
 
@@ -165,9 +167,8 @@ state, timeout, hook, and installer changes should include tests.
 
 ## Scope
 
-Version 0.1 is intentionally single-monitor, unsigned, and local-only.
-Multi-monitor support, signing/notarization, DMG/MSI packaging, and additional
-themes belong to future releases.
+Version 0.1 is multi-monitor, unsigned, and local-only. Signing/notarization,
+DMG/MSI packaging, and additional themes belong to future releases.
 
 Codex Halo is an independent community project and is not affiliated with or
 endorsed by OpenAI. “Codex” is used only to describe compatibility.

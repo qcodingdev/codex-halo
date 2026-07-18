@@ -42,6 +42,13 @@ system security.
 
 Use the app's Quit item before relaunching.
 
+## A connected display has no halo
+
+1. Confirm the display is online and mirroring is disabled.
+2. Quit and reopen Halo after changing the display arrangement.
+3. Open the log and look for `Overlay coverage ready for N display(s)`.
+4. Run Demo Mode and attach the display arrangement plus log to an issue.
+
 ## A state remains visible
 
 Working times out after 30 minutes, attention after 60 minutes, and completed

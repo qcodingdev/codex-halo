@@ -7,9 +7,11 @@ Your screen now knows when Codex is working, waiting, or done.
 - Blue working flow, yellow attention pulse, and green completion sweep
 - Cyber Blue, Sakura, and Minimal themes
 - Native click-through, focus-free Tauri overlay
+- Synchronized edge coverage across every connected display
 - Local-only event-driven state bridge with no server or telemetry
 - Safe, idempotent Codex lifecycle-hook installation and precise uninstall
-- Menu-bar/system-tray controls, Demo Mode, notifications, and Start at Login
+- Single-instance menu-bar/system-tray controls with a native Halo icon
+- Demo Mode, notifications, and Start at Login
 - One Universal macOS package for Intel and Apple Silicon
 - Portable Windows 10/11 x64 package
 
@@ -33,14 +35,15 @@ macOS 15.7.7, using the packaged release app:
 
 | State | Main-process CPU | Main-process RSS |
 |---|---:|---:|
-| Idle | 0.0% in 6/6 samples | 48–51 MiB |
-| Working animation | 1.6–1.7% after warm-up | 50–51 MiB |
+| Idle | 0.0% in 10/10 samples | 50–51 MiB |
+| Working, two displays | 3.1–3.5% after warm-up | 50–51 MiB |
 
 Samples were collected at two-second intervals with macOS `top`; RSS was
-cross-checked with `ps`. The Intel application bundle is 13 MiB before ZIP
-packaging, and the self-contained Universal release ZIP is 7.39 MiB. The
-production web payload is 197.61 KB JavaScript (62.22 KB gzip) and 5.27 KB CSS
-(1.26 KB gzip).
+cross-checked with `ps`. The active measurement drove a 3360×2100 Retina
+display and a 2560×1440 external display simultaneously. The Intel application
+bundle is 13 MiB before ZIP packaging, and the self-contained Universal release
+ZIP is 7.39 MiB. The production web payload is 197.61 KB JavaScript (62.21 KB
+gzip) and 5.53 KB CSS (1.31 KB gzip).
 
 ## Validation
 
@@ -51,6 +54,8 @@ production web payload is 197.61 KB JavaScript (62.22 KB gzip) and 5.27 KB CSS
   privacy checks, two clean uninstalls, and a final retained installation.
 - The packaged app completed idle, working, attention, completed, timeout,
   relaunch, log, and clean-exit smoke tests on real hardware.
+- Two-display working/attention screenshots, one-status-icon inspection, and a
+  forced second-launch rejection passed on real hardware.
 - Safe Hook install, repeat-install, verification, unrelated-Hook preservation,
   privacy, and uninstall tests passed in isolated macOS fixtures.
 - Apple Silicon and Windows are built and tested by CI; they are not claimed as

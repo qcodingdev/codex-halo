@@ -1,10 +1,10 @@
 :root {
   --halo-color: #00d4ff;
   --halo-color-secondary: #0066ff;
-  --halo-width: 4px;
+  --halo-width: 6px;
   --halo-duration: 2800ms;
-  --halo-intensity: 0.78;
-  --halo-glow: 11px;
+  --halo-intensity: 0.95;
+  --halo-glow: 19px;
   color-scheme: dark;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -83,10 +83,23 @@ body,
   position: absolute;
   display: block;
   background: var(--halo-color);
-  box-shadow: 0 0 calc(var(--halo-glow) * 0.65) var(--halo-color);
+  box-shadow:
+    0 0 calc(var(--halo-glow) * 0.65) var(--halo-color),
+    0 0 calc(var(--halo-width) * 0.75) var(--halo-color);
+  z-index: 1;
 }
 
-/* Working: four transform-only light runners keep repainting to thin edge strips. */
+/* A low-cost guide rail keeps the active state discoverable between runners. */
+.halo-frame-working .halo-edge::before {
+  position: absolute;
+  inset: 0;
+  background: var(--halo-color-secondary);
+  box-shadow: inset 0 0 calc(var(--halo-width) * 0.75) var(--halo-color);
+  content: "";
+  opacity: 0.38;
+}
+
+/* Working: four transform-only light runners repaint only the edge strips. */
 .halo-frame-working .halo-edge-light {
   background: linear-gradient(
     90deg,
@@ -102,7 +115,7 @@ body,
 .halo-frame-working .halo-edge-top .halo-edge-light,
 .halo-frame-working .halo-edge-bottom .halo-edge-light {
   top: 0;
-  width: 38%;
+  width: 44%;
   height: 100%;
   animation: halo-run-horizontal var(--halo-duration) linear infinite;
 }
@@ -115,7 +128,7 @@ body,
 .halo-frame-working .halo-edge-right .halo-edge-light {
   left: 0;
   width: 100%;
-  height: 38%;
+  height: 44%;
   background: linear-gradient(
     180deg,
     transparent 0%,
@@ -150,7 +163,7 @@ body,
   }
 }
 
-/* Attention: a restrained, uniform amber breath. */
+/* Attention: a high-contrast, uniform amber breath. */
 .halo-frame-attention .halo-edge {
   background: var(--halo-color);
   animation: halo-attention var(--halo-duration) ease-in-out infinite;
@@ -164,8 +177,8 @@ body,
 @keyframes halo-attention {
   0%,
   100% {
-    opacity: calc(var(--halo-intensity) * 0.28);
-    filter: drop-shadow(0 0 3px var(--halo-color-secondary));
+    opacity: calc(var(--halo-intensity) * 0.42);
+    filter: drop-shadow(0 0 6px var(--halo-color-secondary));
   }
   50% {
     opacity: var(--halo-intensity);

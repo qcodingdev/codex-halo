@@ -7,11 +7,16 @@ mod watcher;
 
 use settings::AppSettings;
 use state::{unix_time_ms, HaloEvent, HaloState};
+use std::collections::HashSet;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{mpsc, Arc, Mutex};
 use std::time::{Duration, Instant};
-use tauri::{AppHandle, Emitter, Manager, WebviewUrl, WebviewWindowBuilder};
+use tauri::{
+    AppHandle, Emitter, Manager, Monitor, WebviewUrl, WebviewWindow, WebviewWindowBuilder,
+};
 use tauri_plugin_notification::NotificationExt;
+
+const OVERLAY_PREFIX: &str = "overlay-";
 
 #[derive(Debug)]
 pub struct RuntimeState {
@@ -32,20 +37,16 @@ pub struct AppState {
     timeout_tx: mpsc::Sender<TimeoutSchedule>,
 }
 
-fn overlay(app: &AppHandle) -> Result<tauri::WebviewWindow, String> {
-    if let Some(window) = app.get_webview_window("overlay") {
-        return Ok(window);
-    }
-
-    let monitor = app
-        .primary_monitor()
-        .map_err(|error| error.to_string())?
-        .ok_or("Primary monitor is unavailable")?;
+fn create_overlay(
+    app: &AppHandle,
+    label: String,
+    monitor: &Monitor,
+) -> Result<WebviewWindow, String> {
     let scale = monitor.scale_factor();
     let logical_size = monitor.size().to_logical::<f64>(scale);
     let logical_position = monitor.position().to_logical::<f64>(scale);
 
-    let window = WebviewWindowBuilder::new(app, "overlay", WebviewUrl::App("index.html".into()))
+    let window = WebviewWindowBuilder::new(app, label, WebviewUrl::App("index.html".into()))
         .title("Codex Halo")
         .decorations(false)
         .transparent(true)
@@ -70,10 +71,7 @@ fn overlay(app: &AppHandle) -> Result<tauri::WebviewWindow, String> {
     Ok(window)
 }
 
-fn fit_primary_monitor(app: &AppHandle, window: &tauri::WebviewWindow) {
-    let Ok(Some(monitor)) = app.primary_monitor() else {
-        return;
-    };
+fn fit_monitor(window: &WebviewWindow, monitor: &Monitor) {
     if let Err(error) = window.set_position(tauri::Position::Physical(*monitor.position())) {
         log::warn!("Could not position overlay: {error}");
     }
@@ -82,28 +80,87 @@ fn fit_primary_monitor(app: &AppHandle, window: &tauri::WebviewWindow) {
     }
 }
 
+fn sync_overlays(app: &AppHandle) -> Result<Vec<WebviewWindow>, String> {
+    let mut monitors = app
+        .available_monitors()
+        .map_err(|error| error.to_string())?;
+    monitors.sort_by_key(|monitor| {
+        (
+            monitor.position().x,
+            monitor.position().y,
+            monitor.size().width,
+            monitor.size().height,
+        )
+    });
+    if monitors.is_empty() {
+        return Err("No display is available".to_owned());
+    }
+
+    let mut expected = HashSet::with_capacity(monitors.len());
+    let mut windows = Vec::with_capacity(monitors.len());
+    for (index, monitor) in monitors.iter().enumerate() {
+        let label = format!("{OVERLAY_PREFIX}{index}");
+        expected.insert(label.clone());
+        let window = match app.get_webview_window(&label) {
+            Some(window) => window,
+            None => {
+                let window = create_overlay(app, label.clone(), monitor)?;
+                log::info!(
+                    "Created overlay {label} for display {}x{} at {},{}",
+                    monitor.size().width,
+                    monitor.size().height,
+                    monitor.position().x,
+                    monitor.position().y
+                );
+                window
+            }
+        };
+        fit_monitor(&window, monitor);
+        windows.push(window);
+    }
+
+    for (label, window) in app.webview_windows() {
+        if label.starts_with(OVERLAY_PREFIX) && !expected.contains(&label) {
+            if let Err(error) = window.destroy() {
+                log::warn!("Could not remove stale overlay {label}: {error}");
+            } else {
+                log::info!("Removed stale overlay {label}");
+            }
+        }
+    }
+    Ok(windows)
+}
+
 fn render_state(app: &AppHandle, state: HaloState) {
-    let Ok(window) = overlay(app) else {
-        log::error!("Could not create the overlay window");
-        return;
+    let windows = match sync_overlays(app) {
+        Ok(windows) => windows,
+        Err(error) => {
+            log::error!("Could not synchronize overlay windows: {error}");
+            return;
+        }
     };
 
     if state == HaloState::Idle {
-        if let Err(error) = window.hide() {
-            log::warn!("Could not hide overlay: {error}");
+        let payload = serde_json::json!({ "state": state.to_string() });
+        for window in windows {
+            let _ = window.emit("halo-state", payload.clone());
+            if let Err(error) = window.hide() {
+                log::warn!("Could not hide {}: {error}", window.label());
+            }
         }
+        let _ = app.emit("halo-state", payload);
         return;
     }
 
-    fit_primary_monitor(app, &window);
-    let _ = window.set_always_on_top(true);
-    let _ = window.set_ignore_cursor_events(true);
-    if let Err(error) = window.show() {
-        log::warn!("Could not show overlay: {error}");
-        return;
-    }
     let payload = serde_json::json!({ "state": state.to_string() });
-    let _ = window.emit("halo-state", payload.clone());
+    for window in windows {
+        let _ = window.set_always_on_top(true);
+        let _ = window.set_ignore_cursor_events(true);
+        let _ = window.emit("halo-state", payload.clone());
+        if let Err(error) = window.show() {
+            log::warn!("Could not show {}: {error}", window.label());
+        }
+    }
     let _ = app.emit("halo-state", payload);
 }
 
@@ -316,6 +373,9 @@ pub fn run() {
     };
 
     let app = tauri::Builder::default()
+        .plugin(tauri_plugin_single_instance::init(|_, _, _| {
+            log::info!("Ignored a second Codex Halo launch");
+        }))
         .plugin(tauri_plugin_notification::init())
         .plugin(
             tauri_plugin_autostart::Builder::new()
@@ -328,7 +388,8 @@ pub fn run() {
             app.handle()
                 .set_activation_policy(tauri::ActivationPolicy::Accessory)?;
 
-            overlay(app.handle()).map_err(std::io::Error::other)?;
+            let overlays = sync_overlays(app.handle()).map_err(std::io::Error::other)?;
+            log::info!("Overlay coverage ready for {} display(s)", overlays.len());
             tray::create_tray(app.handle())?;
             start_timeout_worker(app.handle().clone(), current.clone(), timeout_rx);
 

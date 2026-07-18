@@ -10,6 +10,6 @@ export function getEffectVars(config: EffectConfig): Record<string, string> {
     "--halo-width": `${config.widthPx}px`,
     "--halo-duration": `${config.durationMs}ms`,
     "--halo-intensity": String(config.intensity),
-    "--halo-glow": `${Math.round(14 * config.intensity)}px`,
+    "--halo-glow": `${Math.round(20 * config.intensity)}px`,
   };
 }

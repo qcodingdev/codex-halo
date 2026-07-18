@@ -1,11 +1,45 @@
 use crate::settings::ThemeId;
 use crate::{AppState, HaloState};
 use tauri::{
+    image::Image,
     menu::{CheckMenuItem, CheckMenuItemBuilder, MenuBuilder, MenuItemBuilder, SubmenuBuilder},
     tray::TrayIconBuilder,
     AppHandle, Emitter, Manager,
 };
 use tauri_plugin_autostart::ManagerExt;
+
+fn halo_tray_icon() -> Image<'static> {
+    const SIZE: u32 = 32;
+    const SAMPLES: u32 = 4;
+    const INNER_RADIUS: f32 = 8.0;
+    const OUTER_RADIUS: f32 = 12.5;
+
+    #[cfg(target_os = "macos")]
+    let color = [0_u8, 0_u8, 0_u8];
+    #[cfg(not(target_os = "macos"))]
+    let color = [0_u8, 212_u8, 255_u8];
+
+    let mut rgba = Vec::with_capacity((SIZE * SIZE * 4) as usize);
+    let center = SIZE as f32 / 2.0;
+    for y in 0..SIZE {
+        for x in 0..SIZE {
+            let mut covered = 0_u32;
+            for sample_y in 0..SAMPLES {
+                for sample_x in 0..SAMPLES {
+                    let px = x as f32 + (sample_x as f32 + 0.5) / SAMPLES as f32 - center;
+                    let py = y as f32 + (sample_y as f32 + 0.5) / SAMPLES as f32 - center;
+                    let radius = px.hypot(py);
+                    if (INNER_RADIUS..=OUTER_RADIUS).contains(&radius) {
+                        covered += 1;
+                    }
+                }
+            }
+            rgba.extend_from_slice(&color);
+            rgba.push(((covered * 255) / (SAMPLES * SAMPLES)) as u8);
+        }
+    }
+    Image::new_owned(rgba, SIZE, SIZE)
+}
 
 #[derive(Clone)]
 struct ThemeItems {
@@ -96,12 +130,8 @@ pub fn create_tray(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
     let autostart_for_handler = autostart.clone();
     let themes_for_handler = theme_items.clone();
     TrayIconBuilder::with_id("main")
-        .icon(
-            app.default_window_icon()
-                .cloned()
-                .ok_or("App icon missing")?,
-        )
-        .icon_as_template(true)
+        .icon(halo_tray_icon())
+        .icon_as_template(cfg!(target_os = "macos"))
         .tooltip("Codex Halo")
         .menu(&menu)
         .show_menu_on_left_click(true)
