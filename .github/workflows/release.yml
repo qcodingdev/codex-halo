@@ -11,9 +11,9 @@ jobs:
   macos:
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: pnpm
@@ -22,7 +22,7 @@ jobs:
           targets: x86_64-apple-darwin,aarch64-apple-darwin
       - run: pnpm install --frozen-lockfile
       - run: bash scripts/release/package-macos.sh "${GITHUB_REF_NAME#v}"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: release-macos
           path: dist/release/*.zip
@@ -30,9 +30,9 @@ jobs:
   windows:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: pnpm
@@ -42,7 +42,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - shell: pwsh
         run: scripts/release/package-windows.ps1 $env:GITHUB_REF_NAME.TrimStart("v")
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: release-windows
           path: dist/release/*.zip
@@ -51,8 +51,8 @@ jobs:
     needs: [macos, windows]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v8
         with:
           pattern: release-*
           merge-multiple: true
