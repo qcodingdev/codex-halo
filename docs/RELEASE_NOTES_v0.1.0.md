@@ -38,14 +38,18 @@ macOS 15.7.7, using the packaged release app:
 
 Samples were collected at two-second intervals with macOS `top`; RSS was
 cross-checked with `ps`. The Intel application bundle is 13 MiB before ZIP
-packaging. The production web payload is 197.61 KB JavaScript (62.22 KB gzip)
-and 5.27 KB CSS (1.26 KB gzip).
+packaging, and the self-contained Universal release ZIP is 7.39 MiB. The
+production web payload is 197.61 KB JavaScript (62.22 KB gzip) and 5.27 KB CSS
+(1.26 KB gzip).
 
 ## Validation
 
 - Frontend lint, TypeScript, and production build passed.
 - Rust format, warning-free Clippy, and all 6 unit tests passed.
-- A packaged Intel app completed idle, working, attention, completed, timeout,
+- The CI-built Universal package completed three install/verify cycles on Intel
+  hardware, including repeat-install idempotency, five lifecycle-event probes,
+  privacy checks, two clean uninstalls, and a final retained installation.
+- The packaged app completed idle, working, attention, completed, timeout,
   relaunch, log, and clean-exit smoke tests on real hardware.
 - Safe Hook install, repeat-install, verification, unrelated-Hook preservation,
   privacy, and uninstall tests passed in isolated macOS fixtures.
