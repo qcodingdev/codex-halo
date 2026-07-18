@@ -22,7 +22,7 @@ jobs:
           targets: x86_64-apple-darwin,aarch64-apple-darwin
       - run: pnpm install --frozen-lockfile
       - run: bash scripts/release/package-macos.sh "${GITHUB_REF_NAME#v}"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: release-macos
           path: dist/release/*.zip
@@ -42,7 +42,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - shell: pwsh
         run: scripts/release/package-windows.ps1 $env:GITHUB_REF_NAME.TrimStart("v")
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: release-windows
           path: dist/release/*.zip
