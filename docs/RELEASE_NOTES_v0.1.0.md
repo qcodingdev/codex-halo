@@ -42,7 +42,7 @@ Samples were collected at two-second intervals with macOS `top`; RSS was
 cross-checked with `ps`. The active measurement drove a 3360×2100 Retina
 display and a 2560×1440 external display simultaneously. The Intel application
 bundle is 13 MiB before ZIP packaging, and the self-contained Universal release
-ZIP is 7.39 MiB. The production web payload is 197.61 KB JavaScript (62.21 KB
+ZIP is 7.49 MiB. The production web payload is 197.61 KB JavaScript (62.21 KB
 gzip) and 5.53 KB CSS (1.31 KB gzip).
 
 ## Validation
