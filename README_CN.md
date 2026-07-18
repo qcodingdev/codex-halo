@@ -3,8 +3,8 @@
 </p>
 
 <p align="center">
-  <strong>Codex 在工作、等你操作，还是已经完成，一眼就知道。</strong><br>
-  一个安静、纯本地的 Codex 桌面光环。
+  <strong>给 Codex 装上呼吸灯（跑马灯）——无论在哪个窗口，都知道它是否正在处理你的指令。</strong><br>
+  纯本地的屏幕四边状态灯：工作、等你、完成，一眼可见。
 </p>
 
 <p align="center">
@@ -46,21 +46,24 @@ App 同时包含 Intel `x86_64` 与 Apple Silicon `arm64` 代码。
 
 ### macOS
 
-1. 下载并完整解压 `Codex-Halo-macOS-Universal-v0.1.0.zip`。
+1. 下载并完整解压 `Codex-Halo-macOS-Universal-v0.1.1.zip`。
 2. 运行 **Install Codex Halo.command**。
 3. 首次启动：右键 **Codex Halo.app** → **打开**。
-4. 在 Codex 输入 `/hooks`，审核并信任 Halo 命令 Hook。
+4. 首个 Codex 回合可能出现一次内置安全确认；直接在该确认中允许已安装的本地
+   助手即可，不需要找文件或配置 Hook。
 5. 点击菜单栏图标 → **Demo Mode**。
 
-安装器只写用户目录：应用放到 `~/Applications`，先备份
-`~/.codex/hooks.json`，再安全合并 5 个 Halo 生命周期 Hook。重复安装
+安装器只写用户目录：应用放到 `~/Applications`，先备份并安全扩展 Codex
+实际生效的 `~/.codex/config.toml`，再合并 5 个 Halo 生命周期 Hook；不会改动
+已有 Hook。旧版遗留的 Halo `hooks.json` 项会被移除，其他项保持不变。重复安装
 不会重复添加。
 
 ### Windows
 
-1. 下载并完整解压 `Codex-Halo-Windows-x64-v0.1.0.zip`。
+1. 下载并完整解压 `Codex-Halo-Windows-x64-v0.1.1.zip`。
 2. 使用 PowerShell 运行 `Install-Codex-Halo.ps1`。
-3. 在 Codex 输入 `/hooks`，审核并信任 Halo 命令 Hook。
+3. 首次出现 Codex 内置安全确认时允许已安装的本地助手即可，不需要配置文件或
+   Hook 操作。
 4. 点击托盘图标 → **Demo Mode**。
 
 不需要管理员权限，也不会写入系统级 `Program Files`。
@@ -114,7 +117,7 @@ Hook 只读取 `hook_event_name`，主动丢弃其他输入。状态文件只有
 在 2018 款 Intel Core i9 MacBook Pro、macOS 15.7.7 上，成品 App 的主进程
 空闲 CPU 连续 10 次采样均为 0.0%；同时驱动 3360×2100 Retina 主屏和
 2560×1440 外接屏时，工作动画为 3.1–3.5%，RSS 约 50–51 MiB。测试方法和验收边界见
-[v0.1.0 发布说明](docs/RELEASE_NOTES_v0.1.0.md)；Apple Silicon 与
+[v0.1.1 发布说明](docs/RELEASE_NOTES_v0.1.1.md)；Apple Silicon 与
 Windows 目前仍是 CI 构建验证。
 
 ## 构建与贡献

@@ -9,7 +9,8 @@ APP_DEST="$INSTALL_DIR/$APP_NAME"
 APP_BINARY="$APP_SOURCE/Contents/MacOS/codex-halo-lite"
 HALO_DIR="$HOME/.codex-halo"
 CODEX_DIR="$HOME/.codex"
-HOOKS_FILE="$CODEX_DIR/hooks.json"
+CONFIG_FILE="$CODEX_DIR/config.toml"
+LEGACY_HOOKS_FILE="$CODEX_DIR/hooks.json"
 HOOK_SOURCE="$SCRIPT_DIR/hooks/macos/codex-halo-hook.sh"
 HOOK_DEST="$HALO_DIR/codex-halo-hook.sh"
 MANAGER_SOURCE="$SCRIPT_DIR/support/manage-hooks.js"
@@ -43,18 +44,29 @@ cp -p "$MANAGER_SOURCE" "$MANAGER_DEST"
 chmod 700 "$HOOK_DEST"
 chmod 600 "$MANAGER_DEST"
 
-if [[ -f "$HOOKS_FILE" ]]; then
-  backup="$HOOKS_FILE.backup.$(date +%Y%m%d-%H%M%S)"
-  cp -p "$HOOKS_FILE" "$backup"
-  pass "Backed up hooks.json to $(basename "$backup")"
+if [[ -f "$CONFIG_FILE" ]]; then
+  backup="$CONFIG_FILE.backup.$(date +%Y%m%d-%H%M%S)"
+  cp -p "$CONFIG_FILE" "$backup"
+  pass "Backed up config.toml to $(basename "$backup")"
 fi
 
 hook_command="/bin/bash \"$HOOK_DEST\""
-if ! count="$(/usr/bin/osascript -l JavaScript "$MANAGER_DEST" install "$HOOKS_FILE" "$hook_command" 2>&1)"; then
-  fail "Codex hooks.json is not safe to modify: $count"
+if ! count="$(/usr/bin/osascript -l JavaScript "$MANAGER_DEST" install "$CONFIG_FILE" "$hook_command" 2>&1)"; then
+  fail "Codex config.toml is not safe to modify: $count"
 fi
 [[ "$count" == "5" ]] || fail "Expected 5 Halo lifecycle hooks, found $count."
-pass "Installed 5 idempotent Codex lifecycle hooks"
+pass "Installed 5 idempotent Codex lifecycle hooks in config.toml"
+
+# Migrate an older Codex Halo install away from the pre-config.toml hook file.
+if [[ -f "$LEGACY_HOOKS_FILE" ]]; then
+  legacy_backup="$LEGACY_HOOKS_FILE.backup.$(date +%Y%m%d-%H%M%S)"
+  cp -p "$LEGACY_HOOKS_FILE" "$legacy_backup"
+  if ! legacy_count="$(/usr/bin/osascript -l JavaScript "$MANAGER_DEST" uninstall "$LEGACY_HOOKS_FILE" 2>&1)"; then
+    fail "Could not safely remove legacy Halo hooks: $legacy_count"
+  fi
+  [[ "$legacy_count" == "0" ]] || fail "Legacy Halo hook migration was incomplete."
+  pass "Removed legacy Halo hooks from hooks.json; other hooks were preserved"
+fi
 
 if [[ -d "$APP_DEST" ]]; then
   /usr/bin/pkill -x codex-halo-lite 2>/dev/null || true

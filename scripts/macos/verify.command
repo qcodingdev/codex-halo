@@ -4,7 +4,8 @@ set -u
 HALO_DIR="$HOME/.codex-halo"
 APP_PATH="$HOME/Applications/Codex Halo.app"
 APP_BINARY="$APP_PATH/Contents/MacOS/codex-halo-lite"
-HOOKS_FILE="$HOME/.codex/hooks.json"
+CONFIG_FILE="$HOME/.codex/config.toml"
+LEGACY_HOOKS_FILE="$HOME/.codex/hooks.json"
 MANAGER="$HALO_DIR/manage-hooks.js"
 PASS=0
 FAIL=0
@@ -36,13 +37,20 @@ fi
   && pass "Hook adapter installed" \
   || fail "Hook adapter missing" "Re-run the installer"
 
-if [[ -f "$HOOKS_FILE" ]] && [[ -f "$MANAGER" ]]; then
-  count="$(/usr/bin/osascript -l JavaScript "$MANAGER" verify "$HOOKS_FILE" 2>/dev/null || printf invalid)"
+if [[ -f "$CONFIG_FILE" ]] && [[ -f "$MANAGER" ]]; then
+  count="$(/usr/bin/osascript -l JavaScript "$MANAGER" verify "$CONFIG_FILE" 2>/dev/null || printf invalid)"
   [[ "$count" == "5" ]] \
-    && pass "Exactly 5 Codex Halo hooks installed (no duplicates)" \
+    && pass "Exactly 5 Codex Halo hooks installed in config.toml (no duplicates)" \
     || fail "Codex Halo hook configuration is invalid" "Re-run the installer; found $count handlers"
 else
   fail "Codex hook configuration missing" "Re-run the installer"
+fi
+
+if [[ -f "$LEGACY_HOOKS_FILE" ]] && [[ -f "$MANAGER" ]]; then
+  legacy_count="$(/usr/bin/osascript -l JavaScript "$MANAGER" verify "$LEGACY_HOOKS_FILE" 2>/dev/null || printf invalid)"
+  [[ "$legacy_count" == "0" ]] \
+    && pass "No legacy Halo hooks remain in hooks.json" \
+    || fail "Legacy Halo hooks are still present" "Re-run the installer; found $legacy_count handlers"
 fi
 
 test_script="$(cd "$(dirname "$0")" && pwd)/Test State.sh"

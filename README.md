@@ -3,8 +3,8 @@
 </p>
 
 <p align="center">
-  <strong>Your screen knows when Codex is working, waiting, or done.</strong><br>
-  A quiet, local-only desktop halo for Codex.
+  <strong>Give Codex a breathing light — know it is working from any window.</strong><br>
+  A local-only screen-edge signal for working, waiting, and done.
 </p>
 
 <p align="center">
@@ -48,21 +48,25 @@ contains both Intel `x86_64` and Apple Silicon `arm64` code.
 
 ### macOS
 
-1. Download and extract `Codex-Halo-macOS-Universal-v0.1.0.zip`.
+1. Download and extract `Codex-Halo-macOS-Universal-v0.1.1.zip`.
 2. Run **Install Codex Halo.command**.
 3. Right-click **Codex Halo.app** → **Open** on first launch.
-4. In Codex, open `/hooks` and review/trust the Halo command hooks.
+4. The first Codex turn may show its built-in one-time trust confirmation for
+   the installed local helper; approve it there. No file or Hook configuration
+   is required.
 5. Choose **Demo Mode** from the menu-bar icon.
 
-The per-user installer copies the app to `~/Applications`, backs up
-`~/.codex/hooks.json`, merges exactly five Halo handlers without touching
-existing hooks, and can be run repeatedly without duplicates.
+The per-user installer copies the app to `~/Applications`, backs up and safely
+extends Codex's active `~/.codex/config.toml` with exactly five Halo handlers,
+without touching existing hooks. It also removes Halo's obsolete legacy entries
+from `hooks.json`, leaving all non-Halo entries intact.
 
 ### Windows
 
-1. Download and extract `Codex-Halo-Windows-x64-v0.1.0.zip`.
+1. Download and extract `Codex-Halo-Windows-x64-v0.1.1.zip`.
 2. Run `Install-Codex-Halo.ps1` with PowerShell.
-3. In Codex, open `/hooks` and review/trust the Halo command hooks.
+3. Approve Codex's one-time built-in trust confirmation when it appears; no
+   file or Hook configuration is required.
 4. Choose **Demo Mode** from the tray icon.
 
 No administrator permission or system-level `Program Files` write is required.

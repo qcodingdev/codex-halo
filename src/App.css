@@ -1,10 +1,10 @@
 :root {
   --halo-color: #00d4ff;
   --halo-color-secondary: #0066ff;
-  --halo-width: 6px;
-  --halo-duration: 2800ms;
-  --halo-intensity: 0.95;
-  --halo-glow: 19px;
+  --halo-width: 9px;
+  --halo-duration: 2400ms;
+  --halo-intensity: 1;
+  --halo-glow: 28px;
   color-scheme: dark;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -96,7 +96,18 @@ body,
   background: var(--halo-color-secondary);
   box-shadow: inset 0 0 calc(var(--halo-width) * 0.75) var(--halo-color);
   content: "";
-  opacity: 0.38;
+  opacity: 0.68;
+  animation: halo-working-breath 1800ms ease-in-out infinite;
+}
+
+@keyframes halo-working-breath {
+  0%,
+  100% {
+    opacity: 0.48;
+  }
+  50% {
+    opacity: 0.9;
+  }
 }
 
 /* Working: four transform-only light runners repaint only the edge strips. */
@@ -115,7 +126,7 @@ body,
 .halo-frame-working .halo-edge-top .halo-edge-light,
 .halo-frame-working .halo-edge-bottom .halo-edge-light {
   top: 0;
-  width: 44%;
+  width: 58%;
   height: 100%;
   animation: halo-run-horizontal var(--halo-duration) linear infinite;
 }
@@ -128,7 +139,7 @@ body,
 .halo-frame-working .halo-edge-right .halo-edge-light {
   left: 0;
   width: 100%;
-  height: 44%;
+  height: 58%;
   background: linear-gradient(
     180deg,
     transparent 0%,
@@ -147,19 +158,19 @@ body,
 
 @keyframes halo-run-horizontal {
   from {
-    transform: translate3d(-105%, 0, 0);
+    transform: translate3d(-92%, 0, 0);
   }
   to {
-    transform: translate3d(370%, 0, 0);
+    transform: translate3d(265%, 0, 0);
   }
 }
 
 @keyframes halo-run-vertical {
   from {
-    transform: translate3d(0, -105%, 0);
+    transform: translate3d(0, -92%, 0);
   }
   to {
-    transform: translate3d(0, 370%, 0);
+    transform: translate3d(0, 265%, 0);
   }
 }
 
@@ -217,6 +228,67 @@ body,
   transform-origin: bottom;
   animation-name: halo-sweep-y;
   animation-delay: calc(var(--halo-duration) * 0.75);
+}
+
+/* The first visible working frame establishes the brand before it becomes an edge signal. */
+.halo-activation {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: 144px;
+  height: 144px;
+  pointer-events: none;
+  transform: translate3d(-50%, -50%, 0);
+  animation: halo-activation-bloom 1250ms cubic-bezier(.18,.75,.24,1) both;
+  will-change: transform, opacity;
+}
+
+.halo-activation-mark {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  filter: drop-shadow(0 0 15px var(--halo-color));
+}
+
+.halo-activation-ring {
+  fill: none;
+  stroke: url(#activation-halo);
+  stroke-width: 8;
+  stroke-linecap: round;
+  stroke-dasharray: 226 56;
+  transform: rotate(-32deg);
+  transform-origin: center;
+}
+
+.halo-activation-code {
+  fill: none;
+  stroke: #e8feff;
+  stroke-width: 8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.halo-activation-spark {
+  fill: #d9ffff;
+}
+
+@keyframes halo-activation-bloom {
+  0% {
+    opacity: 0;
+    transform: translate3d(-50%, -50%, 0) scale(.3);
+  }
+  12% {
+    opacity: 1;
+    transform: translate3d(-50%, -50%, 0) scale(1.08);
+  }
+  38% {
+    opacity: 1;
+    transform: translate3d(-50%, -50%, 0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(-50%, -50%, 0) scale(8.5);
+  }
 }
 
 @keyframes halo-sweep-x {
@@ -330,6 +402,10 @@ body,
   .halo-edge,
   .halo-minimal-bar {
     animation: none !important;
+  }
+
+  .halo-activation {
+    display: none;
   }
 
   .halo-frame-working .halo-edge-light,

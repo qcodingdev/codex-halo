@@ -65,16 +65,18 @@ recover to defaults. Logs rotate at 1 MiB and retain one previous file.
 
 ## Installer safety
 
-Halo lives in the separate documented `~/.codex/hooks.json` source. Install:
+Halo lives in a separately marked section of Codex's active
+`~/.codex/config.toml`. Install:
 
-1. parses and structurally validates the current document;
+1. detects only its own begin/end marker and otherwise leaves the current
+   configuration byte-for-byte intact;
 2. creates a timestamped backup;
-3. removes only handlers whose command contains Halo's unique adapter path;
-4. adds one handler for each of five events;
-5. writes atomically.
+3. replaces only that marked section with one handler for each of five events;
+4. writes atomically.
 
-Uninstall applies step 3 to the current file instead of restoring an old backup,
-so hooks added after installation are preserved. Invalid JSON stops modification.
+Uninstall removes only the marked section from the current file instead of
+restoring an old backup, so hooks added after installation are preserved. An
+incomplete or duplicated marker stops modification safely.
 
 ## Source layout
 

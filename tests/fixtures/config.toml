@@ -1,0 +1,11 @@
+model = "gpt-5"
+
+[[hooks.Stop]]
+[[hooks.Stop.hooks]]
+type = "command"
+command = "existing-tool"
+timeout = 10
+
+[hooks.state]
+[hooks.state."/Users/example/.codex/config.toml:stop:0:0"]
+trusted_hash = "sha256:existing"

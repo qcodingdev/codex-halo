@@ -5,7 +5,8 @@ $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $InstallDir = Join-Path $env:LOCALAPPDATA "Codex Halo"
 $HaloDir = Join-Path $env:USERPROFILE ".codex-halo"
 $CodexDir = Join-Path $env:USERPROFILE ".codex"
-$HooksFile = Join-Path $CodexDir "hooks.json"
+$ConfigFile = Join-Path $CodexDir "config.toml"
+$LegacyHooksFile = Join-Path $CodexDir "hooks.json"
 $AppSource = Join-Path $ScriptDir "CodexHalo.exe"
 $AppDest = Join-Path $InstallDir "CodexHalo.exe"
 $HookSource = Join-Path $ScriptDir "hooks\windows\codex-halo-hook.ps1"
@@ -28,17 +29,26 @@ New-Item -ItemType Directory -Force -Path $InstallDir, $HaloDir, $CodexDir | Out
 Copy-Item $HookSource $HookDest -Force
 Copy-Item $ManagerSource $ManagerDest -Force
 
-if (Test-Path $HooksFile) {
-    $Backup = "$HooksFile.backup.$(Get-Date -Format 'yyyyMMdd-HHmmss')"
-    Copy-Item $HooksFile $Backup
-    Write-Host "[PASS] Backed up hooks.json to $(Split-Path -Leaf $Backup)" -ForegroundColor Green
+if (Test-Path $ConfigFile) {
+    $Backup = "$ConfigFile.backup.$(Get-Date -Format 'yyyyMMdd-HHmmss')"
+    Copy-Item $ConfigFile $Backup
+    Write-Host "[PASS] Backed up config.toml to $(Split-Path -Leaf $Backup)" -ForegroundColor Green
 }
 
 $HookCommand = "powershell.exe -NoProfile -ExecutionPolicy Bypass -File `"$HookDest`""
 $Count = & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $ManagerDest `
-    -Operation Install -HooksPath $HooksFile -Command $HookCommand
+    -Operation Install -HooksPath $ConfigFile -Command $HookCommand
 if ([int]$Count -ne 5) { throw "Expected 5 Halo hooks, found $Count." }
-Write-Host "[PASS] Installed 5 idempotent Codex lifecycle hooks" -ForegroundColor Green
+Write-Host "[PASS] Installed 5 idempotent Codex lifecycle hooks in config.toml" -ForegroundColor Green
+
+if (Test-Path $LegacyHooksFile) {
+    $LegacyBackup = "$LegacyHooksFile.backup.$(Get-Date -Format 'yyyyMMdd-HHmmss')"
+    Copy-Item $LegacyHooksFile $LegacyBackup
+    $LegacyCount = & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $ManagerDest `
+        -Operation Uninstall -HooksPath $LegacyHooksFile
+    if ([int]$LegacyCount -ne 0) { throw "Legacy Halo hook migration was incomplete." }
+    Write-Host "[PASS] Removed legacy Halo hooks from hooks.json; other hooks were preserved" -ForegroundColor Green
+}
 
 Get-Process CodexHalo -ErrorAction SilentlyContinue | Stop-Process -Force
 Copy-Item $AppSource $AppDest -Force

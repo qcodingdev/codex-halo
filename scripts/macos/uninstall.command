@@ -3,7 +3,8 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 HALO_DIR="$HOME/.codex-halo"
-HOOKS_FILE="$HOME/.codex/hooks.json"
+CONFIG_FILE="$HOME/.codex/config.toml"
+LEGACY_HOOKS_FILE="$HOME/.codex/hooks.json"
 MANAGER="$HALO_DIR/manage-hooks.js"
 [[ -f "$MANAGER" ]] || MANAGER="$SCRIPT_DIR/support/manage-hooks.js"
 APP_DEST="$HOME/Applications/Codex Halo.app"
@@ -19,15 +20,26 @@ fail() { printf "%s[FAIL]%s %s\n" "$red" "$reset" "$1" >&2; exit 1; }
 
 printf "Codex Halo — macOS uninstaller\n\n"
 
-if [[ -f "$HOOKS_FILE" ]]; then
+if [[ -f "$CONFIG_FILE" ]]; then
   [[ -f "$MANAGER" ]] || fail "Hook manager is missing; stopping before removing the app."
-  backup="$HOOKS_FILE.backup.$(date +%Y%m%d-%H%M%S)"
-  cp -p "$HOOKS_FILE" "$backup"
-  if ! count="$(/usr/bin/osascript -l JavaScript "$MANAGER" uninstall "$HOOKS_FILE" 2>&1)"; then
+  backup="$CONFIG_FILE.backup.$(date +%Y%m%d-%H%M%S)"
+  cp -p "$CONFIG_FILE" "$backup"
+  if ! count="$(/usr/bin/osascript -l JavaScript "$MANAGER" uninstall "$CONFIG_FILE" 2>&1)"; then
     fail "Could not safely remove Halo hooks: $count"
   fi
   [[ "$count" == "0" ]] || fail "Halo hook removal was incomplete."
-  pass "Removed only Codex Halo hooks; other hooks were preserved"
+  pass "Removed only Halo hooks from config.toml; other hooks were preserved"
+fi
+
+if [[ -f "$LEGACY_HOOKS_FILE" ]]; then
+  [[ -f "$MANAGER" ]] || fail "Hook manager is missing; stopping before removing the app."
+  backup="$LEGACY_HOOKS_FILE.backup.$(date +%Y%m%d-%H%M%S)"
+  cp -p "$LEGACY_HOOKS_FILE" "$backup"
+  if ! count="$(/usr/bin/osascript -l JavaScript "$MANAGER" uninstall "$LEGACY_HOOKS_FILE" 2>&1)"; then
+    fail "Could not safely remove legacy Halo hooks: $count"
+  fi
+  [[ "$count" == "0" ]] || fail "Legacy Halo hook removal was incomplete."
+  pass "Removed only legacy Halo hooks; other hooks were preserved"
 fi
 
 /usr/bin/pkill -x codex-halo-lite 2>/dev/null || true

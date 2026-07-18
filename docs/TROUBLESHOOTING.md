@@ -18,6 +18,10 @@ not hook integration.
 4. Use the included Test State script with `working`.
 5. Inspect `~/.codex-halo/state.json`.
 
+Current Codex Desktop reads hooks from `~/.codex/config.toml`. If Verify says
+that its five Halo hooks are absent, re-run the current installer; old releases
+only wrote the legacy `hooks.json` file and cannot trigger current Desktop hooks.
+
 The official adapter field is `hook_event_name`. Old snippets that parse an
 `event` field or register `Notification`, `EndTurn`, or `SubagentStop` are not
 compatible with this release; re-run the current installer.
@@ -70,5 +74,6 @@ issue.
    duplicate Halo entries.
 4. Re-run Verify.
 
-Never restore an old `hooks.json` wholesale: that could overwrite hooks added
-since the backup. The bundled uninstaller removes only Halo's current handlers.
+Never restore an old configuration backup wholesale: that could overwrite hooks
+added since the backup. The bundled uninstaller removes only Halo's marked
+configuration section and legacy Halo handlers.

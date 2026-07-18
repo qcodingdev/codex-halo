@@ -36,8 +36,8 @@ messages. They do not include hook stdin or user content. A 1 MiB startup
 rotation keeps at most the current and previous log.
 
 The installer also writes Halo's adapter and manager under `~/.codex-halo` and
-merges Halo handlers into `~/.codex/hooks.json` after creating a timestamped
-backup.
+adds a marked Halo-only section to `~/.codex/config.toml` after creating a
+timestamped backup. It removes only Halo's legacy entries from `hooks.json`.
 
 ## Network
 

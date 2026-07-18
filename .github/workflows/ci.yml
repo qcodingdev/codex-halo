@@ -30,8 +30,8 @@ jobs:
       - run: cargo test --manifest-path src-tauri/Cargo.toml
       - name: Test macOS hook merge safety
         run: |
-          fixture="$RUNNER_TEMP/hooks.json"
-          cp tests/fixtures/hooks.json "$fixture"
+          fixture="$RUNNER_TEMP/config.toml"
+          cp tests/fixtures/config.toml "$fixture"
           command='/bin/bash "/Users/example/.codex-halo/codex-halo-hook.sh"'
           osascript -l JavaScript scripts/macos/manage-hooks.js install "$fixture" "$command"
           test "$(osascript -l JavaScript scripts/macos/manage-hooks.js verify "$fixture")" = "5"
@@ -39,7 +39,7 @@ jobs:
           test "$(osascript -l JavaScript scripts/macos/manage-hooks.js verify "$fixture")" = "5"
           osascript -l JavaScript scripts/macos/manage-hooks.js uninstall "$fixture"
           test "$(osascript -l JavaScript scripts/macos/manage-hooks.js verify "$fixture")" = "0"
-          plutil -extract hooks.Stop.0.hooks.0.command raw "$fixture" | grep -q existing-tool
+          grep -q 'command = "existing-tool"' "$fixture"
 
   macos-targets:
     name: Build / ${{ matrix.name }}
@@ -115,8 +115,8 @@ jobs:
       - name: Test Windows hook merge safety
         shell: pwsh
         run: |
-          $fixture = Join-Path $env:RUNNER_TEMP "hooks.json"
-          Copy-Item tests/fixtures/hooks.json $fixture
+          $fixture = Join-Path $env:RUNNER_TEMP "config.toml"
+          Copy-Item tests/fixtures/config.toml $fixture
           $command = 'powershell.exe -File "C:\Users\example\.codex-halo\codex-halo-hook.ps1"'
           & scripts/windows/Manage-Codex-HaloHooks.ps1 Install $fixture $command
           if ((& scripts/windows/Manage-Codex-HaloHooks.ps1 Verify $fixture) -ne 5) { exit 1 }
@@ -124,7 +124,7 @@ jobs:
           if ((& scripts/windows/Manage-Codex-HaloHooks.ps1 Verify $fixture) -ne 5) { exit 1 }
           & scripts/windows/Manage-Codex-HaloHooks.ps1 Uninstall $fixture
           if ((& scripts/windows/Manage-Codex-HaloHooks.ps1 Verify $fixture) -ne 0) { exit 1 }
-          if (-not ((Get-Content -Raw $fixture) -like "*existing-tool*")) { exit 1 }
+          if (-not ((Get-Content -Raw $fixture) -like '*command = "existing-tool"*')) { exit 1 }
       - shell: pwsh
         run: scripts/release/package-windows.ps1 0.1.0
       - uses: actions/upload-artifact@v7

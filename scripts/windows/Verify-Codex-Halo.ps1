@@ -1,7 +1,8 @@
 $HaloDir = Join-Path $env:USERPROFILE ".codex-halo"
 $InstallDir = Join-Path $env:LOCALAPPDATA "Codex Halo"
 $AppExe = Join-Path $InstallDir "CodexHalo.exe"
-$HooksFile = Join-Path (Join-Path $env:USERPROFILE ".codex") "hooks.json"
+$ConfigFile = Join-Path (Join-Path $env:USERPROFILE ".codex") "config.toml"
+$LegacyHooksFile = Join-Path (Join-Path $env:USERPROFILE ".codex") "hooks.json"
 $Manager = Join-Path $HaloDir "Manage-Codex-HaloHooks.ps1"
 $Pass = 0
 $Fail = 0
@@ -23,14 +24,23 @@ if (Test-Path (Join-Path $HaloDir "codex-halo-hook.ps1")) {
     Pass "Hook adapter installed"
 } else { Fail "Hook adapter missing" "Re-run the installer" }
 
-if ((Test-Path $HooksFile) -and (Test-Path $Manager)) {
+if ((Test-Path $ConfigFile) -and (Test-Path $Manager)) {
     try {
         $Count = & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $Manager `
-            -Operation Verify -HooksPath $HooksFile
-        if ([int]$Count -eq 5) { Pass "Exactly 5 Halo hooks installed" }
+            -Operation Verify -HooksPath $ConfigFile
+        if ([int]$Count -eq 5) { Pass "Exactly 5 Halo hooks installed in config.toml" }
         else { Fail "Halo hook count is $Count" "Re-run the installer" }
     } catch { Fail "Codex hook configuration is invalid" $_.Exception.Message }
 } else { Fail "Codex hook configuration missing" "Re-run the installer" }
+
+if ((Test-Path $LegacyHooksFile) -and (Test-Path $Manager)) {
+    try {
+        $LegacyCount = & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $Manager `
+            -Operation Verify -HooksPath $LegacyHooksFile
+        if ([int]$LegacyCount -eq 0) { Pass "No legacy Halo hooks remain in hooks.json" }
+        else { Fail "Legacy Halo hook count is $LegacyCount" "Re-run the installer" }
+    } catch { Fail "Legacy Codex hook configuration is invalid" $_.Exception.Message }
+}
 
 $TestScript = Join-Path $PSScriptRoot "Test-State.ps1"
 try {

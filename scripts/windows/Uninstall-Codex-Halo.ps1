@@ -4,23 +4,33 @@ $ErrorActionPreference = "Stop"
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $InstallDir = Join-Path $env:LOCALAPPDATA "Codex Halo"
 $HaloDir = Join-Path $env:USERPROFILE ".codex-halo"
-$HooksFile = Join-Path (Join-Path $env:USERPROFILE ".codex") "hooks.json"
+$ConfigFile = Join-Path (Join-Path $env:USERPROFILE ".codex") "config.toml"
+$LegacyHooksFile = Join-Path (Join-Path $env:USERPROFILE ".codex") "hooks.json"
 $Manager = Join-Path $HaloDir "Manage-Codex-HaloHooks.ps1"
 if (-not (Test-Path $Manager)) {
     $Manager = Join-Path $ScriptDir "support\Manage-Codex-HaloHooks.ps1"
 }
 
 Write-Host "Codex Halo - Windows uninstaller"
-if (Test-Path $HooksFile) {
+if (Test-Path $ConfigFile) {
     if (-not (Test-Path $Manager)) {
         throw "Hook manager is missing. Stopping before removing the app."
     }
-    $Backup = "$HooksFile.backup.$(Get-Date -Format 'yyyyMMdd-HHmmss')"
-    Copy-Item $HooksFile $Backup
+    $Backup = "$ConfigFile.backup.$(Get-Date -Format 'yyyyMMdd-HHmmss')"
+    Copy-Item $ConfigFile $Backup
     $Count = & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $Manager `
-        -Operation Uninstall -HooksPath $HooksFile
+        -Operation Uninstall -HooksPath $ConfigFile
     if ([int]$Count -ne 0) { throw "Halo hook removal was incomplete." }
-    Write-Host "[PASS] Removed only Codex Halo hooks" -ForegroundColor Green
+    Write-Host "[PASS] Removed only Halo hooks from config.toml" -ForegroundColor Green
+}
+if (Test-Path $LegacyHooksFile) {
+    if (-not (Test-Path $Manager)) { throw "Hook manager is missing. Stopping before removing the app." }
+    $Backup = "$LegacyHooksFile.backup.$(Get-Date -Format 'yyyyMMdd-HHmmss')"
+    Copy-Item $LegacyHooksFile $Backup
+    $Count = & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $Manager `
+        -Operation Uninstall -HooksPath $LegacyHooksFile
+    if ([int]$Count -ne 0) { throw "Legacy Halo hook removal was incomplete." }
+    Write-Host "[PASS] Removed only legacy Halo hooks" -ForegroundColor Green
 }
 
 Get-Process CodexHalo -ErrorAction SilentlyContinue | Stop-Process -Force

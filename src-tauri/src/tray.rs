@@ -1,5 +1,6 @@
 use crate::settings::ThemeId;
 use crate::{AppState, HaloState};
+use std::time::{Duration, Instant};
 use tauri::{
     image::Image,
     menu::{CheckMenuItem, CheckMenuItemBuilder, MenuBuilder, MenuItemBuilder, SubmenuBuilder},
@@ -8,11 +9,23 @@ use tauri::{
 };
 use tauri_plugin_autostart::ManagerExt;
 
-fn halo_tray_icon() -> Image<'static> {
+fn distance_to_segment(px: f32, py: f32, ax: f32, ay: f32, bx: f32, by: f32) -> f32 {
+    let ab_x = bx - ax;
+    let ab_y = by - ay;
+    let length_squared = ab_x * ab_x + ab_y * ab_y;
+    let projection = if length_squared == 0.0 {
+        0.0
+    } else {
+        (((px - ax) * ab_x + (py - ay) * ab_y) / length_squared).clamp(0.0, 1.0)
+    };
+    (px - (ax + projection * ab_x)).hypot(py - (ay + projection * ab_y))
+}
+
+fn halo_tray_icon(phase: f32) -> Image<'static> {
     const SIZE: u32 = 32;
     const SAMPLES: u32 = 4;
-    const INNER_RADIUS: f32 = 8.0;
-    const OUTER_RADIUS: f32 = 12.5;
+    const RING_RADIUS: f32 = 10.8;
+    const RING_WIDTH: f32 = 2.4;
 
     #[cfg(target_os = "macos")]
     let color = [0_u8, 0_u8, 0_u8];
@@ -21,6 +34,8 @@ fn halo_tray_icon() -> Image<'static> {
 
     let mut rgba = Vec::with_capacity((SIZE * SIZE * 4) as usize);
     let center = SIZE as f32 / 2.0;
+    let breath = 0.7 + 0.3 * ((phase * std::f32::consts::TAU).sin() * 0.5 + 0.5);
+    let ring_radius = RING_RADIUS + (breath - 0.85) * 1.6;
     for y in 0..SIZE {
         for x in 0..SIZE {
             let mut covered = 0_u32;
@@ -29,16 +44,39 @@ fn halo_tray_icon() -> Image<'static> {
                     let px = x as f32 + (sample_x as f32 + 0.5) / SAMPLES as f32 - center;
                     let py = y as f32 + (sample_y as f32 + 0.5) / SAMPLES as f32 - center;
                     let radius = px.hypot(py);
-                    if (INNER_RADIUS..=OUTER_RADIUS).contains(&radius) {
+                    let ring = (radius - ring_radius).abs() <= RING_WIDTH / 2.0
+                        && !(px > 5.0 && py < -5.0);
+                    let chevron = distance_to_segment(px, py, -6.5, -4.5, -1.6, 0.0) <= 1.45
+                        || distance_to_segment(px, py, -1.6, 0.0, -6.5, 4.5) <= 1.45;
+                    let prompt = distance_to_segment(px, py, 1.8, 4.7, 7.8, 4.7) <= 1.35;
+                    let spark = (px - 7.4).hypot(py + 7.4) <= 1.7;
+                    if ring || chevron || prompt || spark {
                         covered += 1;
                     }
                 }
             }
             rgba.extend_from_slice(&color);
-            rgba.push(((covered * 255) / (SAMPLES * SAMPLES)) as u8);
+            let coverage = (covered * 255) / (SAMPLES * SAMPLES);
+            rgba.push((coverage as f32 * breath) as u8);
         }
     }
     Image::new_owned(rgba, SIZE, SIZE)
+}
+
+fn start_tray_breath(app: AppHandle) {
+    std::thread::spawn(move || {
+        let started = Instant::now();
+        loop {
+            std::thread::sleep(Duration::from_millis(650));
+            let phase = (started.elapsed().as_millis() % 2_600) as f32 / 2_600.0;
+            let Some(tray) = app.tray_by_id("main") else {
+                break;
+            };
+            if let Err(error) = tray.set_icon(Some(halo_tray_icon(phase))) {
+                log::debug!("Could not refresh tray breathing frame: {error}");
+            }
+        }
+    });
 }
 
 #[derive(Clone)]
@@ -130,7 +168,7 @@ pub fn create_tray(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
     let autostart_for_handler = autostart.clone();
     let themes_for_handler = theme_items.clone();
     TrayIconBuilder::with_id("main")
-        .icon(halo_tray_icon())
+        .icon(halo_tray_icon(0.0))
         .icon_as_template(cfg!(target_os = "macos"))
         .tooltip("Codex Halo")
         .menu(&menu)
@@ -161,6 +199,7 @@ pub fn create_tray(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
         })
         .build(app)?;
 
+    start_tray_breath(app.clone());
     log::info!("System tray ready");
     Ok(())
 }
