@@ -12,8 +12,9 @@ not hook integration.
 
 ## Demo Mode works, Codex events do not
 
-1. In Codex, run `/hooks`.
-2. Confirm five Halo command hooks are listed and trusted.
+1. If Codex shows its native one-time confirmation, approve the installed local
+   Halo helper.
+2. Confirm the Verify script reports five Halo hooks.
 3. Run the included Verify script; the expected count is exactly five.
 4. Use the included Test State script with `working`.
 5. Inspect `~/.codex-halo/state.json`.

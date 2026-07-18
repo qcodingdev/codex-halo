@@ -2,6 +2,13 @@
 
 All notable changes are documented here.
 
+## [0.1.2] - 2026-07-19
+
+### Fixed
+
+- Remove the obsolete `/hooks` instruction from both bundled installers; the
+  only possible first-use action is Codex's own native confirmation.
+
 ## [0.1.1] - 2026-07-19
 
 ### Fixed
@@ -39,3 +46,4 @@ All notable changes are documented here.
 
 [0.1.0]: https://github.com/qcodingdev/codex-halo/releases/tag/v0.1.0
 [0.1.1]: https://github.com/qcodingdev/codex-halo/releases/tag/v0.1.1
+[0.1.2]: https://github.com/qcodingdev/codex-halo/releases/tag/v0.1.2

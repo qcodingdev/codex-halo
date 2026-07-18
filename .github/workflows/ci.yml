@@ -86,7 +86,7 @@ jobs:
         with:
           targets: x86_64-apple-darwin,aarch64-apple-darwin
       - run: pnpm install --frozen-lockfile
-      - run: bash scripts/release/package-macos.sh 0.1.0
+      - run: bash scripts/release/package-macos.sh 0.1.2
       - name: Verify Universal app
         run: |
           binary="src-tauri/target/universal-apple-darwin/release/bundle/macos/Codex Halo.app/Contents/MacOS/codex-halo-lite"
@@ -95,7 +95,7 @@ jobs:
       - uses: actions/upload-artifact@v7
         with:
           name: codex-halo-macos-universal
-          path: dist/release/Codex-Halo-macOS-Universal-v0.1.0.zip
+          path: dist/release/Codex-Halo-macOS-Universal-v0.1.2.zip
           if-no-files-found: error
 
   windows-x64:
@@ -126,9 +126,9 @@ jobs:
           if ((& scripts/windows/Manage-Codex-HaloHooks.ps1 Verify $fixture) -ne 0) { exit 1 }
           if (-not ((Get-Content -Raw $fixture) -like '*command = "existing-tool"*')) { exit 1 }
       - shell: pwsh
-        run: scripts/release/package-windows.ps1 0.1.0
+        run: scripts/release/package-windows.ps1 0.1.2
       - uses: actions/upload-artifact@v7
         with:
           name: codex-halo-windows-x64
-          path: dist/release/Codex-Halo-Windows-x64-v0.1.0.zip
+          path: dist/release/Codex-Halo-Windows-x64-v0.1.2.zip
           if-no-files-found: error

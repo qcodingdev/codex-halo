@@ -79,6 +79,6 @@ pass "Installed application to $APP_DEST"
 
 printf "\nInstallation complete.\n"
 printf "1. On first launch, right-click Codex Halo.app and choose Open.\n"
-printf "2. In Codex, open /hooks and review/trust the Halo command hooks.\n"
+printf "2. If Codex shows a one-time native confirmation on first use, approve the installed local helper.\n"
 printf "3. Use the menu-bar icon → Demo Mode for the 8-second preview.\n"
 printf "\nState data: %s\n" "$HALO_DIR"

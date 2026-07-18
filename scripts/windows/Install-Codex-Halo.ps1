@@ -69,5 +69,5 @@ try {
 Start-Process $AppDest
 Write-Host ""
 Write-Host "Installation complete."
-Write-Host "In Codex, open /hooks and review/trust the Halo command hooks."
+Write-Host "If Codex shows a one-time native confirmation on first use, approve the installed local helper."
 Write-Host "Use the tray icon > Demo Mode for the 8-second preview."

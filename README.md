@@ -48,7 +48,7 @@ contains both Intel `x86_64` and Apple Silicon `arm64` code.
 
 ### macOS
 
-1. Download and extract `Codex-Halo-macOS-Universal-v0.1.1.zip`.
+1. Download and extract `Codex-Halo-macOS-Universal-v0.1.2.zip`.
 2. Run **Install Codex Halo.command**.
 3. Right-click **Codex Halo.app** → **Open** on first launch.
 4. The first Codex turn may show its built-in one-time trust confirmation for
@@ -63,7 +63,7 @@ from `hooks.json`, leaving all non-Halo entries intact.
 
 ### Windows
 
-1. Download and extract `Codex-Halo-Windows-x64-v0.1.1.zip`.
+1. Download and extract `Codex-Halo-Windows-x64-v0.1.2.zip`.
 2. Run `Install-Codex-Halo.ps1` with PowerShell.
 3. Approve Codex's one-time built-in trust confirmation when it appears; no
    file or Hook configuration is required.
@@ -146,10 +146,10 @@ Release packaging:
 
 ```bash
 # macOS: real Universal .app, installers, hooks, README, ZIP
-bash scripts/release/package-macos.sh 0.1.0
+bash scripts/release/package-macos.sh 0.1.2
 
 # Windows PowerShell
-./scripts/release/package-windows.ps1 0.1.0
+./scripts/release/package-windows.ps1 0.1.2
 ```
 
 CI builds and verifies macOS Intel, macOS ARM64, macOS Universal, and Windows

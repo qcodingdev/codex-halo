@@ -1,4 +1,4 @@
-Codex Halo v0.1.1
+Codex Halo v0.1.2
 =================
 
 Your screen glows with Codex.
