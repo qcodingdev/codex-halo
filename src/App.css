@@ -94,19 +94,37 @@ body,
   position: absolute;
   inset: 0;
   background: var(--halo-color-secondary);
-  box-shadow: inset 0 0 calc(var(--halo-width) * 0.75) var(--halo-color);
+  box-shadow: inset 0 0 calc(var(--halo-width) * 1.35) var(--halo-color);
   content: "";
-  opacity: 0.68;
+  opacity: 0.82;
   animation: halo-working-breath 1800ms ease-in-out infinite;
+}
+
+/* Keep the glow inside the visible screen. Outer drop shadows are mostly
+ * clipped by macOS at a monitor boundary, so each rail has an inward bloom. */
+.halo-frame-working .halo-edge-top {
+  box-shadow: inset 0 -18px 24px -7px var(--halo-color);
+}
+
+.halo-frame-working .halo-edge-right {
+  box-shadow: inset 18px 0 24px -7px var(--halo-color);
+}
+
+.halo-frame-working .halo-edge-bottom {
+  box-shadow: inset 0 18px 24px -7px var(--halo-color);
+}
+
+.halo-frame-working .halo-edge-left {
+  box-shadow: inset -18px 0 24px -7px var(--halo-color);
 }
 
 @keyframes halo-working-breath {
   0%,
   100% {
-    opacity: 0.48;
+    opacity: 0.58;
   }
   50% {
-    opacity: 0.9;
+    opacity: 1;
   }
 }
 

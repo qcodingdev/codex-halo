@@ -28,7 +28,9 @@ fn halo_tray_icon(phase: f32) -> Image<'static> {
     const RING_WIDTH: f32 = 2.4;
 
     #[cfg(target_os = "macos")]
-    let color = [0_u8, 0_u8, 0_u8];
+    // Menu bars in the supported dark appearance need an explicit high-contrast
+    // mark. Do not rely on template recolouring for frames refreshed at runtime.
+    let color = [255_u8, 255_u8, 255_u8];
     #[cfg(not(target_os = "macos"))]
     let color = [0_u8, 212_u8, 255_u8];
 
@@ -169,7 +171,7 @@ pub fn create_tray(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
     let themes_for_handler = theme_items.clone();
     TrayIconBuilder::with_id("main")
         .icon(halo_tray_icon(0.0))
-        .icon_as_template(cfg!(target_os = "macos"))
+        .icon_as_template(false)
         .tooltip("Codex Halo")
         .menu(&menu)
         .show_menu_on_left_click(true)

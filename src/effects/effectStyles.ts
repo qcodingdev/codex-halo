@@ -10,6 +10,8 @@ export function getEffectVars(config: EffectConfig): Record<string, string> {
     "--halo-width": `${config.widthPx}px`,
     "--halo-duration": `${config.durationMs}ms`,
     "--halo-intensity": String(config.intensity),
-    "--halo-glow": `${Math.round(20 * config.intensity)}px`,
+    // Keep the light legible on Retina displays without animating expensive
+    // layout properties; only the four edge strips are composited.
+    "--halo-glow": `${Math.max(30, Math.round(38 * config.intensity))}px`,
   };
 }

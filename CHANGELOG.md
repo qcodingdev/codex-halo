@@ -2,6 +2,14 @@
 
 All notable changes are documented here.
 
+## [0.1.3] - 2026-07-19
+
+### Fixed
+
+- Render the macOS menu-bar mark explicitly in white for dark menu bars.
+- Make the default full-screen working signal visibly thicker and project its
+  glow inward, where macOS does not clip it at a display boundary.
+
 ## [0.1.2] - 2026-07-19
 
 ### Fixed
@@ -47,3 +55,4 @@ All notable changes are documented here.
 [0.1.0]: https://github.com/qcodingdev/codex-halo/releases/tag/v0.1.0
 [0.1.1]: https://github.com/qcodingdev/codex-halo/releases/tag/v0.1.1
 [0.1.2]: https://github.com/qcodingdev/codex-halo/releases/tag/v0.1.2
+[0.1.3]: https://github.com/qcodingdev/codex-halo/releases/tag/v0.1.3
