@@ -103,19 +103,19 @@ body,
 /* Keep the glow inside the visible screen. Outer drop shadows are mostly
  * clipped by macOS at a monitor boundary, so each rail has an inward bloom. */
 .halo-frame-working .halo-edge-top {
-  box-shadow: inset 0 -18px 24px -7px var(--halo-color);
+  box-shadow: inset 0 -12px 20px -6px var(--halo-color);
 }
 
 .halo-frame-working .halo-edge-right {
-  box-shadow: inset 18px 0 24px -7px var(--halo-color);
+  box-shadow: inset 12px 0 20px -6px var(--halo-color);
 }
 
 .halo-frame-working .halo-edge-bottom {
-  box-shadow: inset 0 18px 24px -7px var(--halo-color);
+  box-shadow: inset 0 12px 20px -6px var(--halo-color);
 }
 
 .halo-frame-working .halo-edge-left {
-  box-shadow: inset -18px 0 24px -7px var(--halo-color);
+  box-shadow: inset -12px 0 20px -6px var(--halo-color);
 }
 
 @keyframes halo-working-breath {

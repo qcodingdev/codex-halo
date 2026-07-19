@@ -48,7 +48,7 @@ contains both Intel `x86_64` and Apple Silicon `arm64` code.
 
 ### macOS
 
-1. Download and extract `Codex-Halo-macOS-Universal-v0.1.5.zip`.
+1. Download and extract `Codex-Halo-macOS-Universal-v0.1.6.zip`.
 2. Run **Install Codex Halo.command**.
 3. Right-click **Codex Halo.app** → **Open** on first launch.
 4. Use Codex normally. Halo begins breathing automatically on the next task.
@@ -60,7 +60,7 @@ its own marked hooks, the installer removes only those obsolete entries.
 
 ### Windows
 
-1. Download and extract `Codex-Halo-Windows-x64-v0.1.5.zip`.
+1. Download and extract `Codex-Halo-Windows-x64-v0.1.6.zip`.
 2. Run `Install-Codex-Halo.ps1` with PowerShell.
 3. Use Codex normally; no file, Hook, or trust configuration is required.
 4. Choose **Demo Mode** from the tray icon.

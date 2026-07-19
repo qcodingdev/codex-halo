@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use std::fmt;
 
-pub const WORKING_TIMEOUT_MS: u64 = 30 * 60 * 1_000;
+pub const WORKING_TIMEOUT_MS: u64 = 10 * 60 * 1_000;
 pub const ATTENTION_TIMEOUT_MS: u64 = 60 * 60 * 1_000;
 pub const COMPLETED_DURATION_MS: u64 = 2_000;
 pub const MAX_FUTURE_SKEW_MS: u64 = 5 * 60 * 1_000;

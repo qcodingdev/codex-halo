@@ -10,7 +10,7 @@ export const THEMES: Record<ThemeId, HaloTheme> = {
       secondaryColor: "#0066ff",
       durationMs: 2800,
       intensity: 0.95,
-      widthPx: 18,
+      widthPx: 8,
       effect: "flow",
     },
     attention: {
@@ -18,7 +18,7 @@ export const THEMES: Record<ThemeId, HaloTheme> = {
       secondaryColor: "#ff6a00",
       durationMs: 900,
       intensity: 0.98,
-      widthPx: 16,
+      widthPx: 8,
       effect: "pulse",
     },
     completed: {
@@ -26,7 +26,7 @@ export const THEMES: Record<ThemeId, HaloTheme> = {
       secondaryColor: "#00cc66",
       durationMs: 2000,
       intensity: 0.95,
-      widthPx: 16,
+      widthPx: 8,
       effect: "sweep",
     },
   },
@@ -40,7 +40,7 @@ export const THEMES: Record<ThemeId, HaloTheme> = {
       secondaryColor: "#c44dff",
       durationMs: 3000,
       intensity: 0.9,
-      widthPx: 18,
+      widthPx: 8,
       effect: "flow",
     },
     attention: {
@@ -48,7 +48,7 @@ export const THEMES: Record<ThemeId, HaloTheme> = {
       secondaryColor: "#ff6eb4",
       durationMs: 900,
       intensity: 0.96,
-      widthPx: 16,
+      widthPx: 8,
       effect: "pulse",
     },
     completed: {
@@ -56,7 +56,7 @@ export const THEMES: Record<ThemeId, HaloTheme> = {
       secondaryColor: "#ffc0cb",
       durationMs: 2000,
       intensity: 0.92,
-      widthPx: 16,
+      widthPx: 8,
       effect: "sweep",
     },
   },

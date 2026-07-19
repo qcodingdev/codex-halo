@@ -2,6 +2,13 @@
 
 All notable changes are documented here.
 
+## [0.1.6] - 2026-07-19
+
+### Fixed
+
+- Recover lifecycle events when Codex atomically replaces a session JSONL file.
+- Reduce the full-edge working rail to a text-safe 8px signal with inward glow.
+
 ## [0.1.5] - 2026-07-19
 
 ### Changed
@@ -72,3 +79,4 @@ All notable changes are documented here.
 [0.1.3]: https://github.com/qcodingdev/codex-halo/releases/tag/v0.1.3
 [0.1.4]: https://github.com/qcodingdev/codex-halo/releases/tag/v0.1.4
 [0.1.5]: https://github.com/qcodingdev/codex-halo/releases/tag/v0.1.5
+[0.1.6]: https://github.com/qcodingdev/codex-halo/releases/tag/v0.1.6

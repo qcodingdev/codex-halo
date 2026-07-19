@@ -157,7 +157,10 @@ fn read_new_activities(
     offsets: &mut HashMap<PathBuf, u64>,
 ) -> Result<Vec<CodexActivity>, String> {
     let length = fs::metadata(path).map_err(|error| error.to_string())?.len();
-    let start = offsets.get(path).copied().unwrap_or(0).min(length);
+    let previous = offsets.get(path).copied().unwrap_or(0);
+    // Codex may replace a JSONL file atomically. A shorter file means the
+    // previous byte offset is no longer valid, so rescan the replacement.
+    let start = if length < previous { 0 } else { previous };
     if start == length {
         return Ok(Vec::new());
     }
@@ -190,8 +193,23 @@ fn read_new_activities(
     Ok(activities)
 }
 
-fn event_may_touch_session(event: &notify::Event) -> bool {
-    event.paths.iter().any(|path| is_session_file(path))
+fn event_may_touch_session(event: &notify::Event, sessions_dir: &Path) -> bool {
+    event
+        .paths
+        .iter()
+        .any(|path| path.starts_with(sessions_dir))
+}
+
+fn collect_session_files(directory: &Path, files: &mut Vec<PathBuf>) -> Result<(), String> {
+    for entry in fs::read_dir(directory).map_err(|error| error.to_string())? {
+        let path = entry.map_err(|error| error.to_string())?.path();
+        if path.is_dir() {
+            collect_session_files(&path, files)?;
+        } else if is_session_file(&path) {
+            files.push(path);
+        }
+    }
+    Ok(())
 }
 
 fn watch_activity_once<F>(sessions_dir: &Path, mut on_activity: F) -> Result<(), String>
@@ -220,9 +238,14 @@ where
 
     loop {
         match event_rx.recv() {
-            Ok(Ok(event)) if event_may_touch_session(&event) => {
-                for path in event.paths.iter().filter(|path| is_session_file(path)) {
-                    match read_new_activities(path, &mut offsets) {
+            Ok(Ok(event)) if event_may_touch_session(&event, sessions_dir) => {
+                let mut files = Vec::new();
+                if let Err(error) = collect_session_files(sessions_dir, &mut files) {
+                    log::debug!("Could not enumerate Codex session files: {error}");
+                    continue;
+                }
+                for path in files {
+                    match read_new_activities(&path, &mut offsets) {
                         Ok(activities) => activities.into_iter().for_each(&mut on_activity),
                         Err(error) => log::debug!("Ignoring Codex session update: {error}"),
                     }
