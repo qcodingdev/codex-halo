@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
-VERSION="${1:-0.1.6}"
+VERSION="${1:-0.1.7}"
 APP_SOURCE="$ROOT/src-tauri/target/universal-apple-darwin/release/bundle/macos/Codex Halo.app"
 OUTPUT="$ROOT/dist/release"
 STAGE="$OUTPUT/macos"

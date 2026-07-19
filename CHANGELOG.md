@@ -2,6 +2,13 @@
 
 All notable changes are documented here.
 
+## [0.1.7] - 2026-07-19
+
+### Improved
+
+- Shorten and reduce the first central Logo flash so it identifies activation
+  without obscuring the user's active window.
+
 ## [0.1.6] - 2026-07-19
 
 ### Fixed
@@ -80,3 +87,4 @@ All notable changes are documented here.
 [0.1.4]: https://github.com/qcodingdev/codex-halo/releases/tag/v0.1.4
 [0.1.5]: https://github.com/qcodingdev/codex-halo/releases/tag/v0.1.5
 [0.1.6]: https://github.com/qcodingdev/codex-halo/releases/tag/v0.1.6
+[0.1.7]: https://github.com/qcodingdev/codex-halo/releases/tag/v0.1.7
