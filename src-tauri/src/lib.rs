@@ -402,6 +402,32 @@ pub fn run() {
             } else {
                 log::error!("State directory is unavailable; file integration is disabled");
             }
+            if let Some(sessions_dir) = platform::codex_sessions_dir() {
+                let handle = app.handle().clone();
+                watcher::spawn_codex_activity(sessions_dir, move |activity| {
+                    let app_state = handle.state::<AppState>();
+                    if app_state.demo_mode.load(Ordering::Acquire)
+                        || !app_state
+                            .settings
+                            .lock()
+                            .unwrap_or_else(|poisoned| poisoned.into_inner())
+                            .enabled
+                    {
+                        return;
+                    }
+                    apply_state(
+                        &handle,
+                        &app_state.current,
+                        &app_state.timeout_tx,
+                        activity.halo_state(),
+                        None,
+                    );
+                });
+            } else {
+                log::debug!(
+                    "Codex session directory is unavailable; hook integration remains active"
+                );
+            }
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![

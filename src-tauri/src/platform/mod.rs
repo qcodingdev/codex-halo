@@ -10,6 +10,12 @@ pub fn state_file_path() -> Option<PathBuf> {
     state_dir().map(|d| d.join("state.json"))
 }
 
+/// Codex Desktop writes append-only session event records here. Halo only
+/// observes lifecycle record types and never stores their prompt/tool payloads.
+pub fn codex_sessions_dir() -> Option<PathBuf> {
+    dirs::home_dir().map(|home| home.join(".codex").join("sessions"))
+}
+
 /// Get the platform-native application data directory.
 pub fn app_data_dir() -> Option<PathBuf> {
     dirs::data_local_dir().map(|dir| dir.join("Codex Halo"))

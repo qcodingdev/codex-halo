@@ -2,6 +2,13 @@
 
 All notable changes are documented here.
 
+## [0.1.4] - 2026-07-19
+
+### Fixed
+
+- Detect Codex Desktop lifecycle records locally, so the working signal starts
+  without relying on an executable hook trust confirmation.
+
 ## [0.1.3] - 2026-07-19
 
 ### Fixed
@@ -56,3 +63,4 @@ All notable changes are documented here.
 [0.1.1]: https://github.com/qcodingdev/codex-halo/releases/tag/v0.1.1
 [0.1.2]: https://github.com/qcodingdev/codex-halo/releases/tag/v0.1.2
 [0.1.3]: https://github.com/qcodingdev/codex-halo/releases/tag/v0.1.3
+[0.1.4]: https://github.com/qcodingdev/codex-halo/releases/tag/v0.1.4

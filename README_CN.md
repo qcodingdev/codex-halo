@@ -46,7 +46,7 @@ App 同时包含 Intel `x86_64` 与 Apple Silicon `arm64` 代码。
 
 ### macOS
 
-1. 下载并完整解压 `Codex-Halo-macOS-Universal-v0.1.3.zip`。
+1. 下载并完整解压 `Codex-Halo-macOS-Universal-v0.1.4.zip`。
 2. 运行 **Install Codex Halo.command**。
 3. 首次启动：右键 **Codex Halo.app** → **打开**。
 4. 首个 Codex 回合可能出现一次内置安全确认；直接在该确认中允许已安装的本地
@@ -60,7 +60,7 @@ App 同时包含 Intel `x86_64` 与 Apple Silicon `arm64` 代码。
 
 ### Windows
 
-1. 下载并完整解压 `Codex-Halo-Windows-x64-v0.1.3.zip`。
+1. 下载并完整解压 `Codex-Halo-Windows-x64-v0.1.4.zip`。
 2. 使用 PowerShell 运行 `Install-Codex-Halo.ps1`。
 3. 首次出现 Codex 内置安全确认时允许已安装的本地助手即可，不需要配置文件或
    Hook 操作。
@@ -117,7 +117,7 @@ Hook 只读取 `hook_event_name`，主动丢弃其他输入。状态文件只有
 在 2018 款 Intel Core i9 MacBook Pro、macOS 15.7.7 上，成品 App 的主进程
 空闲 CPU 连续 10 次采样均为 0.0%；同时驱动 3360×2100 Retina 主屏和
 2560×1440 外接屏时，工作动画为 3.1–3.5%，RSS 约 50–51 MiB。测试方法和验收边界见
-[v0.1.3 发布说明](docs/RELEASE_NOTES_v0.1.3.md)；Apple Silicon 与
+[v0.1.4 发布说明](docs/RELEASE_NOTES_v0.1.4.md)；Apple Silicon 与
 Windows 目前仍是 CI 构建验证。
 
 ## 构建与贡献

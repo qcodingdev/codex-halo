@@ -1,12 +1,44 @@
-use crate::state::{unix_time_ms, HaloEvent, StateFile};
+use crate::state::{unix_time_ms, HaloEvent, HaloState, StateFile};
 use notify::{Config, RecommendedWatcher, RecursiveMode, Watcher};
-use std::path::{Path, PathBuf};
 use std::sync::mpsc;
 use std::time::Duration;
+use std::{
+    collections::HashMap,
+    fs::{self, File},
+    io::{BufRead, BufReader, Seek, SeekFrom},
+    path::{Path, PathBuf},
+};
 
 const READ_RETRIES: usize = 3;
 const RETRY_DELAY: Duration = Duration::from_millis(25);
 const WATCHER_RESTART_DELAY: Duration = Duration::from_secs(5);
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum CodexActivity {
+    Started,
+    Completed,
+}
+
+impl CodexActivity {
+    pub fn halo_state(self) -> HaloState {
+        match self {
+            Self::Started => HaloState::Working,
+            Self::Completed => HaloState::Completed,
+        }
+    }
+}
+
+fn activity_from_line(line: &str) -> Option<CodexActivity> {
+    // Match only the top-level event record shape. User text is JSON-escaped in
+    // session records, so this avoids parsing, retaining, or logging payloads.
+    if line.contains(r#""type":"event_msg","payload":{"type":"task_started"#) {
+        Some(CodexActivity::Started)
+    } else if line.contains(r#""type":"event_msg","payload":{"type":"task_complete"#) {
+        Some(CodexActivity::Completed)
+    } else {
+        None
+    }
+}
 
 pub fn read_current_state(path: &Path) -> Result<HaloEvent, String> {
     let contents = std::fs::read_to_string(path).map_err(|error| error.to_string())?;
@@ -99,6 +131,123 @@ where
     });
 }
 
+fn is_session_file(path: &Path) -> bool {
+    path.extension().and_then(|extension| extension.to_str()) == Some("jsonl")
+}
+
+fn seed_session_offsets(
+    directory: &Path,
+    offsets: &mut HashMap<PathBuf, u64>,
+) -> Result<(), String> {
+    for entry in fs::read_dir(directory).map_err(|error| error.to_string())? {
+        let entry = entry.map_err(|error| error.to_string())?;
+        let path = entry.path();
+        if path.is_dir() {
+            seed_session_offsets(&path, offsets)?;
+        } else if is_session_file(&path) {
+            let length = entry.metadata().map_err(|error| error.to_string())?.len();
+            offsets.insert(path, length);
+        }
+    }
+    Ok(())
+}
+
+fn read_new_activities(
+    path: &Path,
+    offsets: &mut HashMap<PathBuf, u64>,
+) -> Result<Vec<CodexActivity>, String> {
+    let length = fs::metadata(path).map_err(|error| error.to_string())?.len();
+    let start = offsets.get(path).copied().unwrap_or(0).min(length);
+    if start == length {
+        return Ok(Vec::new());
+    }
+
+    let mut file = File::open(path).map_err(|error| error.to_string())?;
+    file.seek(SeekFrom::Start(start))
+        .map_err(|error| error.to_string())?;
+    let mut reader = BufReader::new(file);
+    let mut activities = Vec::new();
+    let mut consumed = 0_u64;
+    loop {
+        let mut bytes = Vec::new();
+        let read = reader
+            .read_until(b'\n', &mut bytes)
+            .map_err(|error| error.to_string())?;
+        if read == 0 {
+            break;
+        }
+        if bytes.last() != Some(&b'\n') {
+            break;
+        }
+        consumed += read as u64;
+        if let Ok(line) = std::str::from_utf8(&bytes) {
+            if let Some(activity) = activity_from_line(line) {
+                activities.push(activity);
+            }
+        }
+    }
+    offsets.insert(path.to_path_buf(), start + consumed);
+    Ok(activities)
+}
+
+fn event_may_touch_session(event: &notify::Event) -> bool {
+    event.paths.iter().any(|path| is_session_file(path))
+}
+
+fn watch_activity_once<F>(sessions_dir: &Path, mut on_activity: F) -> Result<(), String>
+where
+    F: FnMut(CodexActivity),
+{
+    if !sessions_dir.is_dir() {
+        return Err("Codex sessions directory is unavailable".to_owned());
+    }
+
+    let (event_tx, event_rx) = mpsc::channel();
+    let mut watcher = RecommendedWatcher::new(
+        move |event| {
+            let _ = event_tx.send(event);
+        },
+        Config::default(),
+    )
+    .map_err(|error| error.to_string())?;
+    watcher
+        .watch(sessions_dir, RecursiveMode::Recursive)
+        .map_err(|error| error.to_string())?;
+
+    let mut offsets = HashMap::new();
+    seed_session_offsets(sessions_dir, &mut offsets)?;
+    log::info!("Watching Codex session lifecycle events");
+
+    loop {
+        match event_rx.recv() {
+            Ok(Ok(event)) if event_may_touch_session(&event) => {
+                for path in event.paths.iter().filter(|path| is_session_file(path)) {
+                    match read_new_activities(path, &mut offsets) {
+                        Ok(activities) => activities.into_iter().for_each(&mut on_activity),
+                        Err(error) => log::debug!("Ignoring Codex session update: {error}"),
+                    }
+                }
+            }
+            Ok(Ok(_)) => {}
+            Ok(Err(error)) => log::warn!("Codex activity watcher reported an error: {error}"),
+            Err(error) => return Err(format!("Codex activity watcher disconnected: {error}")),
+        }
+    }
+}
+
+pub fn spawn_codex_activity<F>(sessions_dir: PathBuf, on_activity: F)
+where
+    F: Fn(CodexActivity) + Send + Sync + 'static,
+{
+    std::thread::spawn(move || loop {
+        let callback = &on_activity;
+        if let Err(error) = watch_activity_once(&sessions_dir, callback) {
+            log::debug!("Codex activity watcher stopped: {error}; retrying");
+            std::thread::sleep(WATCHER_RESTART_DELAY);
+        }
+    });
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -113,5 +262,18 @@ mod tests {
         let event = read_current_state(&path).expect("valid state");
         assert_eq!(event.state, crate::state::HaloState::Working);
         let _ = std::fs::remove_file(path);
+    }
+
+    #[test]
+    fn recognizes_lifecycle_records_without_parsing_payloads() {
+        assert_eq!(
+            activity_from_line(r#"{"type":"event_msg","payload":{"type":"task_started"}}"#),
+            Some(CodexActivity::Started)
+        );
+        assert_eq!(
+            activity_from_line(r#"{"type":"event_msg","payload":{"type":"task_complete"}}"#),
+            Some(CodexActivity::Completed)
+        );
+        assert_eq!(activity_from_line(r#"{"type":"response_item"}"#), None);
     }
 }
