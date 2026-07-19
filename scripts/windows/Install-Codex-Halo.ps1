@@ -9,8 +9,6 @@ $ConfigFile = Join-Path $CodexDir "config.toml"
 $LegacyHooksFile = Join-Path $CodexDir "hooks.json"
 $AppSource = Join-Path $ScriptDir "CodexHalo.exe"
 $AppDest = Join-Path $InstallDir "CodexHalo.exe"
-$HookSource = Join-Path $ScriptDir "hooks\windows\codex-halo-hook.ps1"
-$HookDest = Join-Path $HaloDir "codex-halo-hook.ps1"
 $ManagerSource = Join-Path $ScriptDir "support\Manage-Codex-HaloHooks.ps1"
 $ManagerDest = Join-Path $HaloDir "Manage-Codex-HaloHooks.ps1"
 
@@ -21,25 +19,28 @@ if (-not $IsWindows -and $PSVersionTable.PSVersion.Major -ge 6) {
 if ([Environment]::OSVersion.Version.Major -lt 10) {
     throw "Codex Halo requires Windows 10 or Windows 11."
 }
-foreach ($Required in @($AppSource, $HookSource, $ManagerSource)) {
+foreach ($Required in @($AppSource, $ManagerSource)) {
     if (-not (Test-Path $Required)) { throw "Release file is missing: $Required" }
 }
 
 New-Item -ItemType Directory -Force -Path $InstallDir, $HaloDir, $CodexDir | Out-Null
-Copy-Item $HookSource $HookDest -Force
 Copy-Item $ManagerSource $ManagerDest -Force
 
-if (Test-Path $ConfigFile) {
+$ExistingCount = & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $ManagerDest `
+    -Operation Verify -HooksPath $ConfigFile
+if ([int]$ExistingCount -ne 0 -and (Test-Path $ConfigFile)) {
     $Backup = "$ConfigFile.backup.$(Get-Date -Format 'yyyyMMdd-HHmmss')"
     Copy-Item $ConfigFile $Backup
     Write-Host "[PASS] Backed up config.toml to $(Split-Path -Leaf $Backup)" -ForegroundColor Green
 }
 
-$HookCommand = "powershell.exe -NoProfile -ExecutionPolicy Bypass -File `"$HookDest`""
-$Count = & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $ManagerDest `
-    -Operation Install -HooksPath $ConfigFile -Command $HookCommand
-if ([int]$Count -ne 5) { throw "Expected 5 Halo hooks, found $Count." }
-Write-Host "[PASS] Installed 5 idempotent Codex lifecycle hooks in config.toml" -ForegroundColor Green
+if ([int]$ExistingCount -ne 0) {
+    $Count = & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $ManagerDest `
+        -Operation Uninstall -HooksPath $ConfigFile
+    if ([int]$Count -ne 0) { throw "Legacy Halo hook removal was incomplete." }
+    Write-Host "[PASS] Removed obsolete Halo hooks; desktop lifecycle detection is built in" -ForegroundColor Green
+}
+Remove-Item (Join-Path $HaloDir "codex-halo-hook.ps1") -Force -ErrorAction SilentlyContinue
 
 if (Test-Path $LegacyHooksFile) {
     $LegacyBackup = "$LegacyHooksFile.backup.$(Get-Date -Format 'yyyyMMdd-HHmmss')"
@@ -69,5 +70,5 @@ try {
 Start-Process $AppDest
 Write-Host ""
 Write-Host "Installation complete."
-Write-Host "If Codex shows a one-time native confirmation on first use, approve the installed local helper."
+Write-Host "Open Codex normally — Halo detects local lifecycle events automatically."
 Write-Host "Use the tray icon > Demo Mode for the 8-second preview."

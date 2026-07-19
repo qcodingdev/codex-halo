@@ -11,8 +11,6 @@ HALO_DIR="$HOME/.codex-halo"
 CODEX_DIR="$HOME/.codex"
 CONFIG_FILE="$CODEX_DIR/config.toml"
 LEGACY_HOOKS_FILE="$CODEX_DIR/hooks.json"
-HOOK_SOURCE="$SCRIPT_DIR/hooks/macos/codex-halo-hook.sh"
-HOOK_DEST="$HALO_DIR/codex-halo-hook.sh"
 MANAGER_SOURCE="$SCRIPT_DIR/support/manage-hooks.js"
 MANAGER_DEST="$HALO_DIR/manage-hooks.js"
 
@@ -31,7 +29,6 @@ printf "System: macOS (%s)\n" "$arch"
 
 [[ -d "$APP_SOURCE" ]] || fail "$APP_NAME is missing from the extracted release."
 [[ -x "$APP_BINARY" ]] || fail "The application bundle is incomplete."
-[[ -f "$HOOK_SOURCE" ]] || fail "The Codex hook adapter is missing."
 [[ -f "$MANAGER_SOURCE" ]] || fail "The safe hook configuration manager is missing."
 if ! lipo -archs "$APP_BINARY" 2>/dev/null | tr ' ' '\n' | grep -qx "$arch"; then
   fail "The application does not contain the required $arch architecture."
@@ -39,23 +36,24 @@ fi
 pass "Application bundle contains $arch"
 
 mkdir -p "$INSTALL_DIR" "$HALO_DIR" "$CODEX_DIR"
-cp -p "$HOOK_SOURCE" "$HOOK_DEST"
 cp -p "$MANAGER_SOURCE" "$MANAGER_DEST"
-chmod 700 "$HOOK_DEST"
 chmod 600 "$MANAGER_DEST"
 
-if [[ -f "$CONFIG_FILE" ]]; then
+existing_count="$(/usr/bin/osascript -l JavaScript "$MANAGER_DEST" verify "$CONFIG_FILE")"
+if [[ "$existing_count" != "0" && -f "$CONFIG_FILE" ]]; then
   backup="$CONFIG_FILE.backup.$(date +%Y%m%d-%H%M%S)"
   cp -p "$CONFIG_FILE" "$backup"
   pass "Backed up config.toml to $(basename "$backup")"
 fi
 
-hook_command="/bin/bash \"$HOOK_DEST\""
-if ! count="$(/usr/bin/osascript -l JavaScript "$MANAGER_DEST" install "$CONFIG_FILE" "$hook_command" 2>&1)"; then
-  fail "Codex config.toml is not safe to modify: $count"
+if [[ "$existing_count" != "0" ]]; then
+  if ! count="$(/usr/bin/osascript -l JavaScript "$MANAGER_DEST" uninstall "$CONFIG_FILE" 2>&1)"; then
+    fail "Codex config.toml is not safe to modify: $count"
+  fi
+  [[ "$count" == "0" ]] || fail "Legacy Halo hook removal was incomplete."
+  pass "Removed obsolete Halo hooks; desktop lifecycle detection is built in"
 fi
-[[ "$count" == "5" ]] || fail "Expected 5 Halo lifecycle hooks, found $count."
-pass "Installed 5 idempotent Codex lifecycle hooks in config.toml"
+/bin/rm -f "$HALO_DIR/codex-halo-hook.sh"
 
 # Migrate an older Codex Halo install away from the pre-config.toml hook file.
 if [[ -f "$LEGACY_HOOKS_FILE" ]]; then
@@ -79,6 +77,6 @@ pass "Installed application to $APP_DEST"
 
 printf "\nInstallation complete.\n"
 printf "1. On first launch, right-click Codex Halo.app and choose Open.\n"
-printf "2. If Codex shows a one-time native confirmation on first use, approve the installed local helper.\n"
+printf "2. Open Codex normally — Halo detects local lifecycle events automatically.\n"
 printf "3. Use the menu-bar icon → Demo Mode for the 8-second preview.\n"
 printf "\nState data: %s\n" "$HALO_DIR"

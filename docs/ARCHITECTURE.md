@@ -3,14 +3,10 @@
 ## Data flow
 
 ```text
-Codex documented hook event
-        │ stdin JSON (hook_event_name is the only consumed field)
+Codex Desktop session JSONL
+        │ task_started / task_complete record type only
         ▼
-Shell / PowerShell adapter
-        │ atomic rename
-        ▼
-~/.codex-halo/state.json
-        │ macOS FSEvents / Windows ReadDirectoryChangesW through notify
+macOS FSEvents / Windows ReadDirectoryChangesW through notify
         ▼
 Rust validation + state machine + timeout worker
         │ halo-state / halo-theme Tauri events
@@ -23,11 +19,10 @@ no WebSocket, HTTP server, database, cloud component, updater, or telemetry.
 
 ## State machine
 
-| Hook event | State | Timeout |
+| Lifecycle record | State | Timeout |
 |---|---|---:|
-| `UserPromptSubmit`, `PreToolUse`, `PostToolUse` | `working` | 30 minutes |
-| `PermissionRequest` | `attention` | 60 minutes |
-| `Stop` | `completed` | 2 seconds |
+| `task_started` | `working` | 30 minutes |
+| `task_complete` | `completed` | 2 seconds |
 | timeout / disabled / quit | `idle` | hidden |
 
 `StateFile::validate` rejects unknown states, unknown JSON fields, stale
@@ -56,7 +51,7 @@ cannot create duplicate status icons or watcher processes.
 ## Persistence
 
 - State bridge: `~/.codex-halo/state.json`
-- Hook adapter/manager: `~/.codex-halo/`
+- Optional manual-state bridge and legacy cleanup manager: `~/.codex-halo/`
 - macOS settings/logs: `~/Library/Application Support/Codex Halo/`
 - Windows settings/logs: `%LOCALAPPDATA%\Codex Halo\`
 
@@ -65,26 +60,25 @@ recover to defaults. Logs rotate at 1 MiB and retain one previous file.
 
 ## Installer safety
 
-Halo lives in a separately marked section of Codex's active
-`~/.codex/config.toml`. Install:
+Halo does not add a section to Codex's active `~/.codex/config.toml`. Install:
 
-1. detects only its own begin/end marker and otherwise leaves the current
+1. detects old Halo begin/end markers and otherwise leaves the current
    configuration byte-for-byte intact;
 2. creates a timestamped backup;
-3. replaces only that marked section with one handler for each of five events;
-4. writes atomically.
+3. removes only that marked legacy section;
+4. writes atomically only when legacy cleanup is needed.
 
-Uninstall removes only the marked section from the current file instead of
-restoring an old backup, so hooks added after installation are preserved. An
-incomplete or duplicated marker stops modification safely.
+Legacy cleanup never restores an old backup, so hooks added after an old Halo
+install are preserved. An incomplete or duplicated marker stops modification
+safely.
 
 ## Source layout
 
 ```text
 src/                 React overlay, effects, themes, Tauri event hook
 src-tauri/src/       window, tray, watcher, settings, logs, state machine
-hooks/               minimal lifecycle adapters
-scripts/macos/       install, verify, uninstall, state test, hook manager
+hooks/               legacy lifecycle adapters
+scripts/macos/       install, verify, uninstall, state test, legacy manager
 scripts/windows/     equivalent PowerShell tools
 scripts/release/     self-contained macOS/Windows ZIP builders
 demo/                README hero source

@@ -33,17 +33,13 @@ else
   fail "State directory is not writable" "Check $HALO_DIR permissions"
 fi
 
-[[ -x "$HALO_DIR/codex-halo-hook.sh" ]] \
-  && pass "Hook adapter installed" \
-  || fail "Hook adapter missing" "Re-run the installer"
-
 if [[ -f "$CONFIG_FILE" ]] && [[ -f "$MANAGER" ]]; then
   count="$(/usr/bin/osascript -l JavaScript "$MANAGER" verify "$CONFIG_FILE" 2>/dev/null || printf invalid)"
-  [[ "$count" == "5" ]] \
-    && pass "Exactly 5 Codex Halo hooks installed in config.toml (no duplicates)" \
-    || fail "Codex Halo hook configuration is invalid" "Re-run the installer; found $count handlers"
+  [[ "$count" == "0" ]] \
+    && pass "No obsolete Halo hooks remain in config.toml" \
+    || fail "Obsolete Halo hooks remain" "Re-run the installer; found $count handlers"
 else
-  fail "Codex hook configuration missing" "Re-run the installer"
+  pass "No Codex Hook configuration is required"
 fi
 
 if [[ -f "$LEGACY_HOOKS_FILE" ]] && [[ -f "$MANAGER" ]]; then

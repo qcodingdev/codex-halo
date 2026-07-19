@@ -20,18 +20,14 @@ try {
     Pass "State directory is writable"
 } catch { Fail "State directory is not writable" "Check $HaloDir permissions" }
 
-if (Test-Path (Join-Path $HaloDir "codex-halo-hook.ps1")) {
-    Pass "Hook adapter installed"
-} else { Fail "Hook adapter missing" "Re-run the installer" }
-
 if ((Test-Path $ConfigFile) -and (Test-Path $Manager)) {
     try {
         $Count = & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $Manager `
             -Operation Verify -HooksPath $ConfigFile
-        if ([int]$Count -eq 5) { Pass "Exactly 5 Halo hooks installed in config.toml" }
-        else { Fail "Halo hook count is $Count" "Re-run the installer" }
+        if ([int]$Count -eq 0) { Pass "No obsolete Halo hooks remain in config.toml" }
+        else { Fail "Obsolete Halo hook count is $Count" "Re-run the installer" }
     } catch { Fail "Codex hook configuration is invalid" $_.Exception.Message }
-} else { Fail "Codex hook configuration missing" "Re-run the installer" }
+} else { Pass "No Codex Hook configuration is required" }
 
 if ((Test-Path $LegacyHooksFile) -and (Test-Path $Manager)) {
     try {

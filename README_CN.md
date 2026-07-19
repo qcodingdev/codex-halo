@@ -46,24 +46,20 @@ App 同时包含 Intel `x86_64` 与 Apple Silicon `arm64` 代码。
 
 ### macOS
 
-1. 下载并完整解压 `Codex-Halo-macOS-Universal-v0.1.4.zip`。
+1. 下载并完整解压 `Codex-Halo-macOS-Universal-v0.1.5.zip`。
 2. 运行 **Install Codex Halo.command**。
 3. 首次启动：右键 **Codex Halo.app** → **打开**。
-4. 首个 Codex 回合可能出现一次内置安全确认；直接在该确认中允许已安装的本地
-   助手即可，不需要找文件或配置 Hook。
+4. 正常使用 Codex；下一次任务开始时 Halo 会自动呼吸。
 5. 点击菜单栏图标 → **Demo Mode**。
 
-安装器只写用户目录：应用放到 `~/Applications`，先备份并安全扩展 Codex
-实际生效的 `~/.codex/config.toml`，再合并 5 个 Halo 生命周期 Hook；不会改动
-已有 Hook。旧版遗留的 Halo `hooks.json` 项会被移除，其他项保持不变。重复安装
-不会重复添加。
+安装器只写用户目录：应用放到 `~/Applications`，不添加 Codex Hook，也不要求
+安全确认。若旧版 Halo 留有自己标记的 Hook，安装器只会清理这些旧项。
 
 ### Windows
 
-1. 下载并完整解压 `Codex-Halo-Windows-x64-v0.1.4.zip`。
+1. 下载并完整解压 `Codex-Halo-Windows-x64-v0.1.5.zip`。
 2. 使用 PowerShell 运行 `Install-Codex-Halo.ps1`。
-3. 首次出现 Codex 内置安全确认时允许已安装的本地助手即可，不需要配置文件或
-   Hook 操作。
+3. 正常使用 Codex；不需要配置文件、Hook 或安全确认。
 4. 点击托盘图标 → **Demo Mode**。
 
 不需要管理员权限，也不会写入系统级 `Program Files`。
@@ -80,30 +76,23 @@ App 同时包含 Intel `x86_64` 与 Apple Silicon `arm64` 代码。
 ## 工作原理
 
 ```text
-Codex 生命周期 Hook
-       │  只写状态、时间戳、事件名
+Codex Desktop 本地会话生命周期记录
+       │  只识别 task_started / task_complete
        ▼
-~/.codex-halo/state.json
-       │  原生文件事件监听
+原生文件事件监听
        ▼
 Rust 状态机 ──Tauri 事件──▶ 鼠标穿透的 React/CSS 光效层
 ```
 
-Halo 使用 Codex 文档化的 `UserPromptSubmit`、`PreToolUse`、
-`PostToolUse`、`PermissionRequest` 和 `Stop` 生命周期事件。状态采用
-原子写入；过期、未来或非法数据会被拒绝；遗留状态会按超时自动回到空闲。
+Halo 只观察 Codex Desktop 本地的 `task_started` 和 `task_complete` 记录，
+不会解析、存储或记录 Prompt/工具负载；遗留状态会按超时自动回到空闲。
 
 没有 HTTP 服务、WebSocket、云端、数据库、更新下载器、账号或埋点。
 
 ## 隐私是结构约束
 
-Hook 只读取 `hook_event_name`，主动丢弃其他输入。状态文件只有：
-
-```json
-{"state":"working","updatedAt":1784383200000,"event":"PreToolUse"}
-```
-
-不会保存 Prompt、工具参数、回复、源码、路径、Token 或环境变量。详见
+只读取本地生命周期记录类型，不会保存 Prompt、工具参数、回复、源码、路径、
+Token 或环境变量。详见
 [隐私说明](docs/PRIVACY.md)与[安全策略](SECURITY.md)。
 
 ## 性能
@@ -117,7 +106,7 @@ Hook 只读取 `hook_event_name`，主动丢弃其他输入。状态文件只有
 在 2018 款 Intel Core i9 MacBook Pro、macOS 15.7.7 上，成品 App 的主进程
 空闲 CPU 连续 10 次采样均为 0.0%；同时驱动 3360×2100 Retina 主屏和
 2560×1440 外接屏时，工作动画为 3.1–3.5%，RSS 约 50–51 MiB。测试方法和验收边界见
-[v0.1.4 发布说明](docs/RELEASE_NOTES_v0.1.4.md)；Apple Silicon 与
+[v0.1.5 发布说明](docs/RELEASE_NOTES_v0.1.5.md)；Apple Silicon 与
 Windows 目前仍是 CI 构建验证。
 
 ## 构建与贡献

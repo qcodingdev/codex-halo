@@ -8,24 +8,16 @@
 4. Run the included Verify script.
 
 Demo Mode does not require Codex. If it fails, the problem is the app/overlay,
-not hook integration.
+not Codex lifecycle detection.
 
 ## Demo Mode works, Codex events do not
 
-1. If Codex shows its native one-time confirmation, approve the installed local
-   Halo helper.
-2. Confirm the Verify script reports five Halo hooks.
-3. Run the included Verify script; the expected count is exactly five.
-4. Use the included Test State script with `working`.
-5. Inspect `~/.codex-halo/state.json`.
-
-Current Codex Desktop reads hooks from `~/.codex/config.toml`. If Verify says
-that its five Halo hooks are absent, re-run the current installer; old releases
-only wrote the legacy `hooks.json` file and cannot trigger current Desktop hooks.
-
-The official adapter field is `hook_event_name`. Old snippets that parse an
-`event` field or register `Notification`, `EndTurn`, or `SubagentStop` are not
-compatible with this release; re-run the current installer.
+1. Confirm **Enable Halo** is checked in the tray menu.
+2. Quit and reopen Halo after updating to the latest release.
+3. Start a new Codex task, then inspect the Halo log for `Watching Codex session
+   lifecycle events` and `idle -> working`.
+4. Use the included Test State script with `working` to distinguish a display
+   issue from lifecycle detection.
 
 ## macOS says the developer cannot be verified
 
@@ -71,10 +63,9 @@ issue.
 
 1. Quit Halo.
 2. Move the platform `settings.json` aside to restore defaults.
-3. Re-run the installer; it creates another timestamped hook backup and does not
-   duplicate Halo entries.
+3. Re-run the installer; it does not add hooks or require a Codex confirmation.
 4. Re-run Verify.
 
 Never restore an old configuration backup wholesale: that could overwrite hooks
-added since the backup. The bundled uninstaller removes only Halo's marked
-configuration section and legacy Halo handlers.
+added since the backup. The bundled installer removes only obsolete marked Halo
+entries from older releases.

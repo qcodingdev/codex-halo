@@ -48,25 +48,21 @@ contains both Intel `x86_64` and Apple Silicon `arm64` code.
 
 ### macOS
 
-1. Download and extract `Codex-Halo-macOS-Universal-v0.1.4.zip`.
+1. Download and extract `Codex-Halo-macOS-Universal-v0.1.5.zip`.
 2. Run **Install Codex Halo.command**.
 3. Right-click **Codex Halo.app** → **Open** on first launch.
-4. The first Codex turn may show its built-in one-time trust confirmation for
-   the installed local helper; approve it there. No file or Hook configuration
-   is required.
+4. Use Codex normally. Halo begins breathing automatically on the next task.
 5. Choose **Demo Mode** from the menu-bar icon.
 
-The per-user installer copies the app to `~/Applications`, backs up and safely
-extends Codex's active `~/.codex/config.toml` with exactly five Halo handlers,
-without touching existing hooks. It also removes Halo's obsolete legacy entries
-from `hooks.json`, leaving all non-Halo entries intact.
+The per-user installer copies the app to `~/Applications`. It does not add a
+Codex Hook or ask for a trust confirmation. If an earlier Halo release added
+its own marked hooks, the installer removes only those obsolete entries.
 
 ### Windows
 
-1. Download and extract `Codex-Halo-Windows-x64-v0.1.4.zip`.
+1. Download and extract `Codex-Halo-Windows-x64-v0.1.5.zip`.
 2. Run `Install-Codex-Halo.ps1` with PowerShell.
-3. Approve Codex's one-time built-in trust confirmation when it appears; no
-   file or Hook configuration is required.
+3. Use Codex normally; no file, Hook, or trust configuration is required.
 4. Choose **Demo Mode** from the tray icon.
 
 No administrator permission or system-level `Program Files` write is required.
@@ -83,35 +79,27 @@ from the native tray menu. Preferences persist across restarts.
 ## How it works
 
 ```text
-Codex lifecycle hook
-       │  writes state + timestamp + event name only
+Codex Desktop session lifecycle record
+       │  task_started / task_complete only
        ▼
-~/.codex-halo/state.json
-       │  native event-driven watcher
+native event-driven watcher
        ▼
 Rust state machine ──Tauri event──▶ click-through React/CSS overlay
 ```
 
-Halo integrates with the documented Codex lifecycle events:
-`UserPromptSubmit`, `PreToolUse`, `PostToolUse`, `PermissionRequest`, and
-`Stop`. State writes are atomic, stale/future timestamps are rejected, and
-timeouts return abandoned states to idle.
+Halo observes only Codex Desktop's local `task_started` and `task_complete`
+records. It never parses, stores, or logs prompt/tool payloads. State timeouts
+return abandoned states to idle.
 
 There is no HTTP server, WebSocket, cloud service, database, updater, account,
 or analytics endpoint.
 
 ## Privacy by construction
 
-The hook adapter reads `hook_event_name` and deliberately discards all other
-input. The state file contains only:
-
-```json
-{"state":"working","updatedAt":1784383200000,"event":"PreToolUse"}
-```
-
-Halo never stores prompts, tool inputs, responses, source code, paths, tokens,
-or environment variables. Logs contain operational state transitions and
-errors only. See [Privacy](docs/PRIVACY.md) and [Security](SECURITY.md).
+Halo reads local lifecycle record types only; it never stores prompts, tool
+inputs, responses, source code, paths, tokens, or environment variables. Logs
+contain operational state transitions and errors only. See
+[Privacy](docs/PRIVACY.md) and [Security](SECURITY.md).
 
 ## Performance
 
