@@ -12,7 +12,8 @@ use std::{
 const READ_RETRIES: usize = 3;
 const RETRY_DELAY: Duration = Duration::from_millis(25);
 const WATCHER_RESTART_DELAY: Duration = Duration::from_secs(5);
-const ACTIVE_SESSION_POLL_INTERVAL: Duration = Duration::from_secs(1);
+const SESSION_POLL_INTERVAL: Duration = Duration::from_millis(500);
+const RECENT_SESSION_LIMIT: usize = 8;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum CodexActivity {
@@ -197,6 +198,30 @@ fn seed_session_offsets(
     Ok(())
 }
 
+fn recent_session_files(offsets: &HashMap<PathBuf, u64>) -> Vec<PathBuf> {
+    let mut files = offsets
+        .keys()
+        .filter_map(|path| {
+            fs::metadata(path)
+                .and_then(|metadata| metadata.modified())
+                .ok()
+                .map(|modified| (modified, path.clone()))
+        })
+        .collect::<Vec<_>>();
+    files.sort_unstable_by(|left, right| right.0.cmp(&left.0));
+    files
+        .into_iter()
+        .take(RECENT_SESSION_LIMIT)
+        .map(|(_, path)| path)
+        .collect()
+}
+
+fn remember_recent_file(files: &mut Vec<PathBuf>, path: PathBuf) {
+    files.retain(|candidate| candidate != &path);
+    files.insert(0, path);
+    files.truncate(RECENT_SESSION_LIMIT);
+}
+
 fn read_new_activities(
     path: &Path,
     offsets: &mut HashMap<PathBuf, u64>,
@@ -281,16 +306,11 @@ where
     let mut active_turns = ActiveTurns::default();
     let mut active_files = HashSet::new();
     seed_session_offsets(sessions_dir, &mut offsets)?;
+    let mut recent_files = recent_session_files(&offsets);
     log::info!("Watching Codex session lifecycle events");
 
     loop {
-        let message = if active_turns.is_working() {
-            event_rx.recv_timeout(ACTIVE_SESSION_POLL_INTERVAL)
-        } else {
-            event_rx
-                .recv()
-                .map_err(|_| mpsc::RecvTimeoutError::Disconnected)
-        };
+        let message = event_rx.recv_timeout(SESSION_POLL_INTERVAL);
         match message {
             Ok(Ok(event)) if event_may_touch_session(&event, sessions_dir) => {
                 let mut files = Vec::new();
@@ -300,8 +320,12 @@ where
                 }
                 let mut activities = Vec::new();
                 for path in files {
+                    let is_new = !offsets.contains_key(&path);
                     match read_new_activities(&path, &mut offsets) {
                         Ok(records) => {
+                            if is_new || !records.is_empty() {
+                                remember_recent_file(&mut recent_files, path.clone());
+                            }
                             if !records.is_empty() {
                                 active_files.insert(path);
                             }
@@ -321,9 +345,20 @@ where
             Ok(Err(error)) => log::warn!("Codex activity watcher reported an error: {error}"),
             Err(mpsc::RecvTimeoutError::Timeout) => {
                 let mut activities = Vec::new();
-                for path in &active_files {
-                    match read_new_activities(path, &mut offsets) {
-                        Ok(records) => activities.extend(records),
+                let files = if active_turns.is_working() {
+                    active_files.iter().cloned().collect::<Vec<_>>()
+                } else {
+                    recent_files.clone()
+                };
+                for path in files {
+                    match read_new_activities(&path, &mut offsets) {
+                        Ok(records) => {
+                            if !records.is_empty() {
+                                active_files.insert(path.clone());
+                                remember_recent_file(&mut recent_files, path);
+                            }
+                            activities.extend(records);
+                        }
                         Err(error) => log::debug!("Ignoring active Codex session update: {error}"),
                     }
                 }
@@ -391,6 +426,40 @@ mod tests {
             })
         );
         assert_eq!(activity_from_line(r#"{"type":"response_item"}"#), None);
+    }
+
+    #[test]
+    fn polls_activity_appended_to_an_existing_recent_session() {
+        use std::io::Write;
+
+        let directory =
+            std::env::temp_dir().join(format!("codex-halo-session-{}", std::process::id()));
+        let path = directory.join("rollout.jsonl");
+        std::fs::create_dir_all(&directory).expect("create session fixture directory");
+        std::fs::write(&path, "{\"type\":\"session_meta\"}\n").expect("write session fixture");
+
+        let mut offsets = HashMap::new();
+        seed_session_offsets(&directory, &mut offsets).expect("seed session offsets");
+        assert_eq!(recent_session_files(&offsets), vec![path.clone()]);
+
+        let mut file = std::fs::OpenOptions::new()
+            .append(true)
+            .open(&path)
+            .expect("open session fixture");
+        writeln!(
+            file,
+            r#"{{"type":"event_msg","payload":{{"type":"task_started","turn_id":"turn-1"}}}}"#
+        )
+        .expect("append lifecycle event");
+
+        assert_eq!(
+            read_new_activities(&path, &mut offsets).expect("poll appended activity"),
+            vec![CodexActivityRecord {
+                activity: CodexActivity::Started,
+                turn_id: "turn-1".to_owned(),
+            }]
+        );
+        let _ = std::fs::remove_dir_all(directory);
     }
 
     #[test]
