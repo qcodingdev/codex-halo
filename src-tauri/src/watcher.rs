@@ -3,7 +3,7 @@ use notify::{Config, RecommendedWatcher, RecursiveMode, Watcher};
 use std::sync::mpsc;
 use std::time::Duration;
 use std::{
-    collections::HashMap,
+    collections::{HashMap, HashSet},
     fs::{self, File},
     io::{BufRead, BufReader, Seek, SeekFrom},
     path::{Path, PathBuf},
@@ -12,6 +12,7 @@ use std::{
 const READ_RETRIES: usize = 3;
 const RETRY_DELAY: Duration = Duration::from_millis(25);
 const WATCHER_RESTART_DELAY: Duration = Duration::from_secs(5);
+const ACTIVE_SESSION_POLL_INTERVAL: Duration = Duration::from_secs(1);
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum CodexActivity {
@@ -28,16 +29,60 @@ impl CodexActivity {
     }
 }
 
-fn activity_from_line(line: &str) -> Option<CodexActivity> {
+#[derive(Debug, PartialEq, Eq)]
+struct CodexActivityRecord {
+    activity: CodexActivity,
+    turn_id: String,
+}
+
+#[derive(Default)]
+struct ActiveTurns {
+    turn_ids: HashSet<String>,
+}
+
+impl ActiveTurns {
+    fn is_working(&self) -> bool {
+        !self.turn_ids.is_empty()
+    }
+
+    fn apply(
+        &mut self,
+        records: impl IntoIterator<Item = CodexActivityRecord>,
+    ) -> Option<CodexActivity> {
+        let was_working = !self.turn_ids.is_empty();
+        for record in records {
+            match record.activity {
+                CodexActivity::Started => {
+                    self.turn_ids.insert(record.turn_id);
+                }
+                CodexActivity::Completed => {
+                    self.turn_ids.remove(&record.turn_id);
+                }
+            }
+        }
+        match (was_working, self.turn_ids.is_empty()) {
+            (false, false) => Some(CodexActivity::Started),
+            (true, true) => Some(CodexActivity::Completed),
+            _ => None,
+        }
+    }
+}
+
+fn activity_from_line(line: &str) -> Option<CodexActivityRecord> {
     // Match only the top-level event record shape. User text is JSON-escaped in
     // session records, so this avoids parsing, retaining, or logging payloads.
-    if line.contains(r#""type":"event_msg","payload":{"type":"task_started"#) {
-        Some(CodexActivity::Started)
+    let activity = if line.contains(r#""type":"event_msg","payload":{"type":"task_started"#) {
+        CodexActivity::Started
     } else if line.contains(r#""type":"event_msg","payload":{"type":"task_complete"#) {
-        Some(CodexActivity::Completed)
+        CodexActivity::Completed
     } else {
-        None
-    }
+        return None;
+    };
+    let turn_id = line.split_once(r#""turn_id":""#)?.1.split_once('"')?.0;
+    (!turn_id.is_empty()).then(|| CodexActivityRecord {
+        activity,
+        turn_id: turn_id.to_owned(),
+    })
 }
 
 pub fn read_current_state(path: &Path) -> Result<HaloEvent, String> {
@@ -155,7 +200,7 @@ fn seed_session_offsets(
 fn read_new_activities(
     path: &Path,
     offsets: &mut HashMap<PathBuf, u64>,
-) -> Result<Vec<CodexActivity>, String> {
+) -> Result<Vec<CodexActivityRecord>, String> {
     let length = fs::metadata(path).map_err(|error| error.to_string())?.len();
     let previous = offsets.get(path).copied().unwrap_or(0);
     // Codex may replace a JSONL file atomically. A shorter file means the
@@ -233,27 +278,65 @@ where
         .map_err(|error| error.to_string())?;
 
     let mut offsets = HashMap::new();
+    let mut active_turns = ActiveTurns::default();
+    let mut active_files = HashSet::new();
     seed_session_offsets(sessions_dir, &mut offsets)?;
     log::info!("Watching Codex session lifecycle events");
 
     loop {
-        match event_rx.recv() {
+        let message = if active_turns.is_working() {
+            event_rx.recv_timeout(ACTIVE_SESSION_POLL_INTERVAL)
+        } else {
+            event_rx
+                .recv()
+                .map_err(|_| mpsc::RecvTimeoutError::Disconnected)
+        };
+        match message {
             Ok(Ok(event)) if event_may_touch_session(&event, sessions_dir) => {
                 let mut files = Vec::new();
                 if let Err(error) = collect_session_files(sessions_dir, &mut files) {
                     log::debug!("Could not enumerate Codex session files: {error}");
                     continue;
                 }
+                let mut activities = Vec::new();
                 for path in files {
                     match read_new_activities(&path, &mut offsets) {
-                        Ok(activities) => activities.into_iter().for_each(&mut on_activity),
+                        Ok(records) => {
+                            if !records.is_empty() {
+                                active_files.insert(path);
+                            }
+                            activities.extend(records);
+                        }
                         Err(error) => log::debug!("Ignoring Codex session update: {error}"),
                     }
+                }
+                if let Some(activity) = active_turns.apply(activities) {
+                    on_activity(activity);
+                }
+                if !active_turns.is_working() {
+                    active_files.clear();
                 }
             }
             Ok(Ok(_)) => {}
             Ok(Err(error)) => log::warn!("Codex activity watcher reported an error: {error}"),
-            Err(error) => return Err(format!("Codex activity watcher disconnected: {error}")),
+            Err(mpsc::RecvTimeoutError::Timeout) => {
+                let mut activities = Vec::new();
+                for path in &active_files {
+                    match read_new_activities(path, &mut offsets) {
+                        Ok(records) => activities.extend(records),
+                        Err(error) => log::debug!("Ignoring active Codex session update: {error}"),
+                    }
+                }
+                if let Some(activity) = active_turns.apply(activities) {
+                    on_activity(activity);
+                }
+                if !active_turns.is_working() {
+                    active_files.clear();
+                }
+            }
+            Err(mpsc::RecvTimeoutError::Disconnected) => {
+                return Err("Codex activity watcher disconnected".to_owned());
+            }
         }
     }
 }
@@ -290,13 +373,66 @@ mod tests {
     #[test]
     fn recognizes_lifecycle_records_without_parsing_payloads() {
         assert_eq!(
-            activity_from_line(r#"{"type":"event_msg","payload":{"type":"task_started"}}"#),
+            activity_from_line(
+                r#"{"type":"event_msg","payload":{"type":"task_started","turn_id":"turn-1"}}"#
+            ),
+            Some(CodexActivityRecord {
+                activity: CodexActivity::Started,
+                turn_id: "turn-1".to_owned(),
+            })
+        );
+        assert_eq!(
+            activity_from_line(
+                r#"{"type":"event_msg","payload":{"type":"task_complete","turn_id":"turn-1"}}"#
+            ),
+            Some(CodexActivityRecord {
+                activity: CodexActivity::Completed,
+                turn_id: "turn-1".to_owned(),
+            })
+        );
+        assert_eq!(activity_from_line(r#"{"type":"response_item"}"#), None);
+    }
+
+    #[test]
+    fn keeps_breathing_until_all_overlapping_turns_finish() {
+        let mut turns = ActiveTurns::default();
+        let record = |activity, turn_id: &str| CodexActivityRecord {
+            activity,
+            turn_id: turn_id.to_owned(),
+        };
+
+        assert_eq!(
+            turns.apply([record(CodexActivity::Started, "turn-1")]),
             Some(CodexActivity::Started)
         );
         assert_eq!(
-            activity_from_line(r#"{"type":"event_msg","payload":{"type":"task_complete"}}"#),
+            turns.apply([
+                record(CodexActivity::Started, "turn-2"),
+                record(CodexActivity::Completed, "turn-1"),
+            ]),
+            None
+        );
+        assert_eq!(
+            turns.apply([record(CodexActivity::Completed, "turn-2")]),
             Some(CodexActivity::Completed)
         );
-        assert_eq!(activity_from_line(r#"{"type":"response_item"}"#), None);
+    }
+
+    #[test]
+    fn ignores_complete_historical_turn_batches() {
+        let mut turns = ActiveTurns::default();
+        assert_eq!(
+            turns.apply([
+                CodexActivityRecord {
+                    activity: CodexActivity::Started,
+                    turn_id: "old-turn".to_owned(),
+                },
+                CodexActivityRecord {
+                    activity: CodexActivity::Completed,
+                    turn_id: "old-turn".to_owned(),
+                },
+            ]),
+            None
+        );
     }
 }

@@ -71,15 +71,6 @@ fn create_overlay(
     Ok(window)
 }
 
-fn fit_monitor(window: &WebviewWindow, monitor: &Monitor) {
-    if let Err(error) = window.set_position(tauri::Position::Physical(*monitor.position())) {
-        log::warn!("Could not position overlay: {error}");
-    }
-    if let Err(error) = window.set_size(tauri::Size::Physical(*monitor.size())) {
-        log::warn!("Could not size overlay: {error}");
-    }
-}
-
 fn sync_overlays(app: &AppHandle) -> Result<Vec<WebviewWindow>, String> {
     let mut monitors = app
         .available_monitors()
@@ -115,7 +106,6 @@ fn sync_overlays(app: &AppHandle) -> Result<Vec<WebviewWindow>, String> {
                 window
             }
         };
-        fit_monitor(&window, monitor);
         windows.push(window);
     }
 
