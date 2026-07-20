@@ -1,6 +1,6 @@
 [package]
 name = "codex-halo-lite"
-version = "0.1.7"
+version = "0.1.8"
 description = "Codex Halo - Screen edge glows with your AI assistant"
 authors = ["Codex Halo"]
 edition = "2021"

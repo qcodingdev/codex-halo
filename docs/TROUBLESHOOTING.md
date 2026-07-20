@@ -55,9 +55,9 @@ after 2 seconds. Updates with old timestamps are ignored. Run Test State with
 ## CPU remains active while idle
 
 Confirm the state is idle and the overlay is hidden. A correctly installed v0.1
-uses filesystem events and should not wake every 500 ms. If activity persists,
-capture several Activity Monitor/Task Manager samples plus the log and open an
-issue.
+uses filesystem events plus a 500 ms metadata check limited to eight recent
+session files; it does not rescan session history. If activity persists, capture
+several Activity Monitor/Task Manager samples plus the log and open an issue.
 
 ## Safe recovery
 

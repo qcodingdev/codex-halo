@@ -28,8 +28,8 @@
 
 The overlay never accepts focus and every mouse click passes through to the app
 underneath it. Every connected display gets its own synchronized edge overlay.
-When idle, all overlay windows are hidden and the file watcher blocks on native
-filesystem events rather than polling.
+When idle, all overlay windows are hidden. Native filesystem events are backed
+by a bounded check of only the eight most recent session files.
 
 ## Download
 
@@ -48,7 +48,7 @@ contains both Intel `x86_64` and Apple Silicon `arm64` code.
 
 ### macOS
 
-1. Download and extract `Codex-Halo-macOS-Universal-v0.1.7.zip`.
+1. Download and extract `Codex-Halo-macOS-Universal-v0.1.8.zip`.
 2. Run **Install Codex Halo.command**.
 3. Right-click **Codex Halo.app** → **Open** on first launch.
 4. Use Codex normally. Halo begins breathing automatically on the next task.
@@ -60,7 +60,7 @@ its own marked hooks, the installer removes only those obsolete entries.
 
 ### Windows
 
-1. Download and extract `Codex-Halo-Windows-x64-v0.1.7.zip`.
+1. Download and extract `Codex-Halo-Windows-x64-v0.1.8.zip`.
 2. Run `Install-Codex-Halo.ps1` with PowerShell.
 3. Use Codex normally; no file, Hook, or trust configuration is required.
 4. Choose **Demo Mode** from the tray icon.
@@ -82,7 +82,7 @@ from the native tray menu. Preferences persist across restarts.
 Codex Desktop session lifecycle record
        │  task_started / task_complete only
        ▼
-native event-driven watcher
+native watcher + bounded recent-session fallback
        ▼
 Rust state machine ──Tauri event──▶ click-through React/CSS overlay
 ```
@@ -105,18 +105,16 @@ contain operational state transitions and errors only. See
 
 The performance design is intentionally boring:
 
-- native filesystem notifications instead of a 500 ms polling loop;
+- native filesystem notifications plus a 500 ms check limited to eight recent
+  session files;
 - hidden overlay and no CSS animation in idle;
 - transform/opacity-first edge animations;
 - one cancellable timeout worker instead of one sleeping thread per event;
 - a 197.61 KB production JavaScript bundle (62.21 KB gzip).
 
-On a 2018 Intel Core i9 MacBook Pro running macOS 15.7.7, the packaged app
-measured 0.0% main-process CPU across ten idle samples and 3.1–3.5% while
-animating both a 3360×2100 Retina display and a 2560×1440 external display.
-Main-process RSS stayed around 50–51 MiB. See the
-[v0.1.0 release notes](docs/RELEASE_NOTES_v0.1.0.md) for the method and
-validation scope; Apple Silicon and Windows remain CI-only validation.
+The overlay remains hidden with no CSS animation while idle. The fallback reads
+file metadata only for a bounded recent set rather than rescanning session
+history. Apple Silicon and Windows remain CI-only validation.
 
 ## Build
 

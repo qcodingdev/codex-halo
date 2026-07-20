@@ -28,7 +28,7 @@
 
 Halo 的透明窗口不会获取焦点，所有鼠标操作都会穿透到下面的应用。每块
 已连接屏幕都有独立且同步的四边光效；空闲时所有光效窗口直接隐藏。Rust
-使用系统文件事件监听，不做 500ms 轮询。
+优先使用系统文件事件，并以最多八个最近会话文件的 500ms 轻量检查兜底。
 
 ## 下载
 
@@ -46,7 +46,7 @@ App 同时包含 Intel `x86_64` 与 Apple Silicon `arm64` 代码。
 
 ### macOS
 
-1. 下载并完整解压 `Codex-Halo-macOS-Universal-v0.1.7.zip`。
+1. 下载并完整解压 `Codex-Halo-macOS-Universal-v0.1.8.zip`。
 2. 运行 **Install Codex Halo.command**。
 3. 首次启动：右键 **Codex Halo.app** → **打开**。
 4. 正常使用 Codex；下一次任务开始时 Halo 会自动呼吸。
@@ -57,7 +57,7 @@ App 同时包含 Intel `x86_64` 与 Apple Silicon `arm64` 代码。
 
 ### Windows
 
-1. 下载并完整解压 `Codex-Halo-Windows-x64-v0.1.7.zip`。
+1. 下载并完整解压 `Codex-Halo-Windows-x64-v0.1.8.zip`。
 2. 使用 PowerShell 运行 `Install-Codex-Halo.ps1`。
 3. 正常使用 Codex；不需要配置文件、Hook 或安全确认。
 4. 点击托盘图标 → **Demo Mode**。
@@ -79,7 +79,7 @@ App 同时包含 Intel `x86_64` 与 Apple Silicon `arm64` 代码。
 Codex Desktop 本地会话生命周期记录
        │  只识别 task_started / task_complete
        ▼
-原生文件事件监听
+原生文件事件 + 最近会话轻量检查
        ▼
 Rust 状态机 ──Tauri 事件──▶ 鼠标穿透的 React/CSS 光效层
 ```
@@ -97,17 +97,14 @@ Token 或环境变量。详见
 
 ## 性能
 
-- 原生文件事件替代定时轮询；
+- 原生文件事件为主，仅对最多八个最近会话文件做 500ms 轻量检查；
 - 空闲时隐藏窗口、停止 CSS 动画；
 - 光效以 transform/opacity 动画为主；
 - 单个可取消的超时工作线程；
 - 生产 JS 197.61 KB，gzip 62.21 KB。
 
-在 2018 款 Intel Core i9 MacBook Pro、macOS 15.7.7 上，成品 App 的主进程
-空闲 CPU 连续 10 次采样均为 0.0%；同时驱动 3360×2100 Retina 主屏和
-2560×1440 外接屏时，工作动画为 3.1–3.5%，RSS 约 50–51 MiB。测试方法和验收边界见
-[v0.1.7 发布说明](docs/RELEASE_NOTES_v0.1.7.md)；Apple Silicon 与
-Windows 目前仍是 CI 构建验证。
+空闲时光效窗口隐藏且不运行 CSS 动画；兜底检查只读取有限数量文件的元数据，
+不会重复扫描历史会话。Apple Silicon 与 Windows 目前仍是 CI 构建验证。
 
 ## 构建与贡献
 

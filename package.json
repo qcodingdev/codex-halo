@@ -1,7 +1,7 @@
 {
   "name": "codex-halo-lite",
   "private": true,
-  "version": "0.1.7",
+  "version": "0.1.8",
   "packageManager": "pnpm@9.1.1",
   "type": "module",
   "engines": {

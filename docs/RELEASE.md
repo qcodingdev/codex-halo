@@ -17,21 +17,21 @@
 ## Build artifacts
 
 ```bash
-bash scripts/release/package-macos.sh 0.1.7
+bash scripts/release/package-macos.sh 0.1.8
 ```
 
 This runs the complete Tauri Universal app bundler, verifies both architectures,
 then stages the app, installers, adapter, hook manager, state test, and release
-README into `Codex-Halo-macOS-Universal-v0.1.7.zip`. It does not hand-assemble an
+README into `Codex-Halo-macOS-Universal-v0.1.8.zip`. It does not hand-assemble an
 incomplete `.app`.
 
 From Windows PowerShell:
 
 ```powershell
-./scripts/release/package-windows.ps1 0.1.7
+./scripts/release/package-windows.ps1 0.1.8
 ```
 
-Output: `Codex-Halo-Windows-x64-v0.1.7.zip`.
+Output: `Codex-Halo-Windows-x64-v0.1.8.zip`.
 
 ## Version and publish
 
@@ -39,12 +39,12 @@ Version values in `package.json`, `src-tauri/Cargo.toml`, and
 `src-tauri/tauri.conf.json` must match. Push reviewed `main`, wait for CI, then:
 
 ```bash
-git tag -a v0.1.7 -m "Codex Halo v0.1.7"
-git push origin v0.1.7
+git tag -a v0.1.8 -m "Codex Halo v0.1.8"
+git push origin v0.1.8
 ```
 
 The tag workflow independently rebuilds both packages and creates the GitHub
-Release from `docs/RELEASE_NOTES_v0.1.7.md`.
+Release from `docs/RELEASE_NOTES_v0.1.8.md`.
 
 ## Honest validation labels
 

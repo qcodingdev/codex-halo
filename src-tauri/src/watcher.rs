@@ -208,7 +208,7 @@ fn recent_session_files(offsets: &HashMap<PathBuf, u64>) -> Vec<PathBuf> {
                 .map(|modified| (modified, path.clone()))
         })
         .collect::<Vec<_>>();
-    files.sort_unstable_by(|left, right| right.0.cmp(&left.0));
+    files.sort_unstable_by_key(|entry| std::cmp::Reverse(entry.0));
     files
         .into_iter()
         .take(RECENT_SESSION_LIMIT)

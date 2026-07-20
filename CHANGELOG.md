@@ -2,6 +2,15 @@
 
 All notable changes are documented here.
 
+## [0.1.8] - 2026-07-20
+
+### Fixed
+
+- Detect task start and completion reliably when Codex appends to an existing
+  session file.
+- Keep one correctly sized edge halo on every connected display.
+- Remove the overlapping center activation light.
+
 ## [0.1.7] - 2026-07-19
 
 ### Improved
@@ -88,3 +97,4 @@ All notable changes are documented here.
 [0.1.5]: https://github.com/qcodingdev/codex-halo/releases/tag/v0.1.5
 [0.1.6]: https://github.com/qcodingdev/codex-halo/releases/tag/v0.1.6
 [0.1.7]: https://github.com/qcodingdev/codex-halo/releases/tag/v0.1.7
+[0.1.8]: https://github.com/qcodingdev/codex-halo/releases/tag/v0.1.8
